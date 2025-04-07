@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -88,6 +89,7 @@ const Submit = () => {
     setScrapeError(null);
 
     try {
+      console.log('Attempting to scrape URL:', urlToScrape);
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -97,6 +99,8 @@ const Submit = () => {
       const { data, error } = await supabase.functions.invoke('scrapeUrl', {
         body: { url: urlToScrape }
       });
+
+      console.log('Scrape function response:', { data, error });
 
       if (error) {
         throw new Error(error.message || 'Failed to scrape event details');

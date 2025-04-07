@@ -133,79 +133,126 @@ serve(async (req) => {
 
     // Call the Python API
     console.log(`Sending request to Python API: ${pythonApiUrl}`);
-    const response = await fetch(pythonApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(apiPayload),
-    });
+    
+    try {
+      const response = await fetch(pythonApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiPayload),
+      });
 
-    // Process the response
-    const responseText = await response.text();
-    let rawLlmResponse = null;
-    let parsedEventData = null;
-    let errorMessage = null;
+      // Process the response
+      const responseText = await response.text();
+      let rawLlmResponse = null;
+      let parsedEventData = null;
+      let errorMessage = null;
 
-    if (response.ok) {
-      try {
-        rawLlmResponse = JSON.parse(responseText);
-        // Check if the response has the expected structure
-        if (rawLlmResponse.title && 
-            (rawLlmResponse.description !== undefined) && 
-            (rawLlmResponse.start_datetime !== undefined)) {
-          parsedEventData = rawLlmResponse;
-        } else {
-          errorMessage = "Python API returned success but with unexpected data structure";
+      console.log(`Python API response status: ${response.status}`);
+      
+      if (response.ok) {
+        try {
+          rawLlmResponse = JSON.parse(responseText);
+          console.log(`Python API response body: ${JSON.stringify(rawLlmResponse, null, 2)}`);
+          
+          // Check if the response has the expected structure
+          if (rawLlmResponse.title && 
+              (rawLlmResponse.description !== undefined) && 
+              (rawLlmResponse.start_datetime !== undefined)) {
+            parsedEventData = rawLlmResponse;
+          } else {
+            errorMessage = "Python API returned success but with unexpected data structure";
+            console.error(errorMessage);
+            console.error("Response:", JSON.stringify(rawLlmResponse));
+          }
+        } catch (e) {
+          errorMessage = `Failed to parse Python API response: ${e.message}`;
+          console.error(errorMessage);
+          console.error("Raw response:", responseText);
         }
-      } catch (e) {
-        errorMessage = `Failed to parse Python API response: ${e.message}`;
+      } else {
+        // Try to parse error response
+        try {
+          const errorResponse = JSON.parse(responseText);
+          errorMessage = errorResponse.error || errorResponse.details || `API Error: ${response.status}`;
+          console.error(`Python API error: ${errorMessage}`);
+        } catch (e) {
+          errorMessage = `API Error: ${response.status} - ${responseText.substring(0, 200)}`;
+          console.error(errorMessage);
+        }
       }
-    } else {
-      // Try to parse error response
-      try {
-        const errorResponse = JSON.parse(responseText);
-        errorMessage = errorResponse.error || errorResponse.details || `API Error: ${response.status}`;
-      } catch (e) {
-        errorMessage = `API Error: ${response.status} - ${responseText.substring(0, 200)}`;
+
+      // Log the scrape attempt
+      const { data: scrapeLog, error: logError } = await supabaseClient
+        .from('scrape_logs')
+        .insert({
+          requested_by_user_id: user.id,
+          url_scraped: url,
+          custom_instruction_id_used: customInstructionId,
+          playwright_flag_used: usePlaywright,
+          raw_llm_response: rawLlmResponse,
+          parsed_event_data: parsedEventData,
+          error_message: errorMessage,
+          is_reported_bad: false
+        })
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('Error logging scrape attempt:', logError);
       }
-    }
 
-    // Log the scrape attempt
-    const { data: scrapeLog, error: logError } = await supabaseClient
-      .from('scrape_logs')
-      .insert({
-        requested_by_user_id: user.id,
-        url_scraped: url,
-        custom_instruction_id_used: customInstructionId,
-        playwright_flag_used: usePlaywright,
-        raw_llm_response: rawLlmResponse,
-        parsed_event_data: parsedEventData,
-        error_message: errorMessage,
-        is_reported_bad: false
-      })
-      .select()
-      .single();
+      // Return the appropriate response to the client
+      if (parsedEventData) {
+        return new Response(
+          JSON.stringify({
+            scrape_log_id: scrapeLog?.id,
+            data: parsedEventData
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({
+            scrape_log_id: scrapeLog?.id,
+            error: 'Failed to scrape event details.',
+            details: errorMessage
+          }),
+          { 
+            status: 422,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    } catch (fetchError) {
+      console.error('Error fetching from Python API:', fetchError);
+      
+      // Log the scrape attempt with the fetch error
+      const { data: scrapeLog, error: logError } = await supabaseClient
+        .from('scrape_logs')
+        .insert({
+          requested_by_user_id: user.id,
+          url_scraped: url,
+          custom_instruction_id_used: customInstructionId,
+          playwright_flag_used: usePlaywright,
+          raw_llm_response: null,
+          parsed_event_data: null,
+          error_message: `Failed to connect to Python API: ${fetchError.message}`,
+          is_reported_bad: false
+        })
+        .select()
+        .single();
 
-    if (logError) {
-      console.error('Error logging scrape attempt:', logError);
-    }
+      if (logError) {
+        console.error('Error logging scrape attempt:', logError);
+      }
 
-    // Return the appropriate response to the client
-    if (parsedEventData) {
-      return new Response(
-        JSON.stringify({
-          scrape_log_id: scrapeLog?.id,
-          data: parsedEventData
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
       return new Response(
         JSON.stringify({
           scrape_log_id: scrapeLog?.id,
           error: 'Failed to scrape event details.',
-          details: errorMessage
+          details: `Connection to Python API failed: ${fetchError.message}`
         }),
         { 
           status: 422,
