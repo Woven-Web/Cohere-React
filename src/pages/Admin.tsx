@@ -7,10 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import PendingEventsList from '@/components/events/PendingEventsList';
 import { ClipboardList, Settings, Users, Flag } from 'lucide-react';
 import EventFlagsList from '@/components/admin/EventFlagsList';
-
-// Import admin-only components here
-// import UserManagement from '@/components/admin/UserManagement';
-// import CustomInstructionsManager from '@/components/admin/CustomInstructionsManager';
+import UserManagement from '@/components/admin/UserManagement';
+import CustomInstructionsManager from '@/components/admin/CustomInstructionsManager';
 
 const Admin = () => {
   const { user, isAdmin, isCurator, loading } = useAuth();
@@ -99,8 +97,7 @@ const Admin = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* <UserManagement /> - To be implemented */}
-                  <p>User management functionality will be implemented soon.</p>
+                  <UserManagement />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -114,8 +111,7 @@ const Admin = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* <CustomInstructionsManager /> - To be implemented */}
-                  <p>Custom instructions management will be implemented soon.</p>
+                  <CustomInstructionsManager />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, EyeIcon, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ const PendingEventsList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('happenings')
-        .select('*, user_profiles:submitter_user_id(role)')
+        .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       
