@@ -1,9 +1,11 @@
+
 import { useState, useCallback } from 'react';
 import { addDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Happening } from '@/lib/supabase';
 
-export interface EventFilters {
+// Export the FiltersState type (renamed from EventFilters to avoid confusion)
+export interface FiltersState {
   dateRange: DateRange | undefined;
   locationRadius: number | null;
   userLocation: { lat: number; lng: number } | null;
@@ -35,7 +37,7 @@ export const useEventFilters = () => {
   const today = new Date();
   const oneWeekFromNow = addDays(today, 7);
   
-  const [filters, setFilters] = useState<EventFilters>({
+  const [filters, setFilters] = useState<FiltersState>({
     dateRange: {
       from: today,
       to: oneWeekFromNow
