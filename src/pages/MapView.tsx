@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 const BOULDER_COORDINATES: [number, number] = [-105.2705, 40.0150];
+const DEFAULT_ZOOM = 12;
 
 interface EventWithCoordinates extends Happening {
   coordinates?: [number, number];
@@ -81,7 +82,7 @@ const MapView = () => {
   };
 
   useEffect(() => {
-    if (!mapContainer.current || !events.length || !token || !isValid) return;
+    if (!mapContainer.current || !token || !isValid) return;
     
     if (!map.current) {
       mapboxgl.accessToken = token;
@@ -90,7 +91,7 @@ const MapView = () => {
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: BOULDER_COORDINATES,
-        zoom: 10
+        zoom: DEFAULT_ZOOM
       });
       
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -102,6 +103,12 @@ const MapView = () => {
     
     if (mapLoaded && events.length > 0) {
       addMarkersToMap();
+    } else if (mapLoaded) {
+      map.current.flyTo({
+        center: BOULDER_COORDINATES,
+        zoom: DEFAULT_ZOOM,
+        essential: true
+      });
     }
     
     return () => {
@@ -149,7 +156,14 @@ const MapView = () => {
       
       map.current.fitBounds(bounds, {
         padding: 50,
-        maxZoom: 15
+        maxZoom: 15,
+        duration: 1000
+      });
+    } else {
+      map.current.flyTo({
+        center: BOULDER_COORDINATES,
+        zoom: DEFAULT_ZOOM,
+        essential: true
       });
     }
   };
