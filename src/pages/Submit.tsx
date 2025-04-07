@@ -12,8 +12,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface EventFormData {
   title: string;
@@ -48,7 +48,7 @@ interface ScrapeResult {
 }
 
 const Submit = () => {
-  const { user } = useAuth();
+  const { user, isCurator, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
   const [urlToScrape, setUrlToScrape] = useState('');
@@ -244,6 +244,9 @@ const Submit = () => {
         endDateTime.setHours(endHours, endMinutes);
       }
 
+      // Set status based on user role
+      const status = isCurator || isAdmin ? 'approved' : 'pending';
+      
       const eventData = {
         title: formData.title,
         description: formData.description,
@@ -252,7 +255,8 @@ const Submit = () => {
         location: formData.location,
         source_url: formData.source_url,
         submitter_user_id: user.id,
-        scrape_log_id: formData.scrape_log_id
+        scrape_log_id: formData.scrape_log_id,
+        status: status
       };
 
       const { error } = await supabase
@@ -263,7 +267,9 @@ const Submit = () => {
 
       toast({
         title: 'Success',
-        description: 'Your event has been submitted and will be reviewed by a curator.',
+        description: isCurator || isAdmin 
+          ? 'Your event has been submitted and is now live!' 
+          : 'Your event has been submitted and will be reviewed by a curator.',
       });
       
       navigate('/');
@@ -285,6 +291,11 @@ const Submit = () => {
         <h1 className="text-3xl font-bold mb-2">Submit an Event</h1>
         <p className="text-muted-foreground">
           Share your community happenings with others
+          {(isCurator || isAdmin) && (
+            <span className="ml-2 text-yellow-500 font-medium">
+              - Your event will be published immediately
+            </span>
+          )}
         </p>
       </div>
 
