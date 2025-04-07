@@ -23,9 +23,21 @@ import {
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
+// Define specific joined types to handle potential errors
+interface UserProfileResult {
+  role?: string;
+  error?: boolean;
+}
+
+interface CustomInstructionResult {
+  url_pattern?: string;
+  error?: boolean;
+}
+
+// Define the extended type with proper nullable/optional fields
 type ExtendedScrapeLog = ScrapeLog & {
-  user_profiles?: { role: string } | null;
-  custom_instructions?: { url_pattern: string } | null;
+  user_profiles?: UserProfileResult | null;
+  custom_instructions?: CustomInstructionResult | null;
 };
 
 const ScrapeLogsList = () => {
@@ -45,8 +57,17 @@ const ScrapeLogsList = () => {
 
       if (error) throw error;
       
-      // Type assertion to ensure proper typing
-      return (data || []) as ExtendedScrapeLog[];
+      // Convert the data to our expected type with proper handling for potential errors
+      const typedData = (data || []).map(item => {
+        // Ensure we have a properly shaped object even if the joins returned errors
+        return {
+          ...item,
+          user_profiles: typeof item.user_profiles === 'object' ? item.user_profiles : null,
+          custom_instructions: typeof item.custom_instructions === 'object' ? item.custom_instructions : null
+        } as ExtendedScrapeLog;
+      });
+      
+      return typedData;
     },
   });
 
