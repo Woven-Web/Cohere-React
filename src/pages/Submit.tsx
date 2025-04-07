@@ -6,6 +6,7 @@ import EventForm from '@/components/events/EventForm';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 interface ScrapeData {
   data: any;
@@ -16,6 +17,7 @@ interface ScrapeData {
 const Submit = () => {
   const { user, isCurator, isAdmin } = useAuth();
   const [scrapeData, setScrapeData] = useState<ScrapeData | undefined>(undefined);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const handleScrapedData = (data: any, url: string, logId: string | null) => {
     setScrapeData({ data, url, logId });
@@ -42,12 +44,12 @@ const Submit = () => {
         </TabsList>
         
         <TabsContent value="scrape" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-2">
+          <div className={`grid grid-cols-1 ${isMobile ? "" : "lg:grid-cols-5"} gap-8`}>
+            <div className={isMobile ? "" : "lg:col-span-2"}>
               <ScrapeForm onScrapedData={handleScrapedData} />
             </div>
 
-            <div className="lg:col-span-3">
+            <div className={isMobile ? "mt-6" : "lg:col-span-3"}>
               {user && (
                 <EventForm 
                   userId={user.id}
