@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Clock, MapPin, Link2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, Link2, AlertTriangle, Loader2, Flag } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -56,6 +56,7 @@ const Submit = () => {
   const [submitting, setSubmitting] = useState(false);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [scrapeLogId, setScrapeLogId] = useState<string | null>(null);
+  const [reportingIssue, setReportingIssue] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -87,6 +88,7 @@ const Submit = () => {
 
     setScraping(true);
     setScrapeError(null);
+    setScrapeLogId(null);
 
     try {
       console.log('Attempting to scrape URL:', urlToScrape);
@@ -102,26 +104,33 @@ const Submit = () => {
 
       console.log('Scrape function response:', response);
 
-      // Handle the response
+      // The edge function now always returns a 200 status with data in the response
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to scrape event details');
+        // This is a connection error to the edge function itself
+        throw new Error(response.error.message || 'Failed to connect to event scraper');
       }
 
       const data = response.data;
       
+      // Store the scrape log ID regardless of success/failure
       if (data.scrape_log_id) {
         setScrapeLogId(data.scrape_log_id);
       }
 
       if (data.data) {
+        // Successful scrape with event data
         populateFormWithScrapeData(data.data, urlToScrape);
         toast({
           title: 'Success',
           description: 'Successfully scraped event details!',
         });
       } else if (data.error) {
+        // Scrape function ran but couldn't extract event data
+        setScrapeError(data.details || data.error);
         throw new Error(data.error + (data.details ? ': ' + data.details : ''));
       } else {
+        // Unexpected response format
+        setScrapeError('No event data or error details returned');
         throw new Error('No event data found in the response');
       }
     } catch (error: any) {
@@ -173,16 +182,21 @@ const Submit = () => {
     if (!scrapeLogId) return;
 
     try {
+      setReportingIssue(true);
+      
       const { error } = await supabase
         .from('scrape_logs')
         .update({ is_reported_bad: true })
         .eq('id', scrapeLogId);
 
       if (error) throw error;
+      
       toast({
         title: 'Thank you',
-        description: 'Thank you for reporting this issue',
+        description: 'Thank you for reporting this issue. We will look into it.',
       });
+      
+      setScrapeError(prev => prev ? `${prev} (Reported)` : null);
     } catch (error: any) {
       console.error('Error reporting bad scrape:', error);
       toast({
@@ -190,6 +204,8 @@ const Submit = () => {
         description: error.message || 'Failed to report issue',
         variant: 'destructive'
       });
+    } finally {
+      setReportingIssue(false);
     }
   };
 
@@ -313,15 +329,22 @@ const Submit = () => {
                       <span className="font-medium text-red-800">Scraping failed</span>
                     </div>
                     <p className="mt-1 text-red-700">{scrapeError}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 text-red-600"
-                      onClick={reportBadScrape}
-                      disabled={!scrapeLogId}
-                    >
-                      Report this issue
-                    </Button>
+                    {scrapeLogId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 text-red-600 border-red-300 hover:bg-red-100 hover:text-red-700"
+                        onClick={reportBadScrape}
+                        disabled={reportingIssue || scrapeError?.includes('(Reported)')}
+                      >
+                        {reportingIssue ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Flag className="h-4 w-4 mr-2" />
+                        )}
+                        {scrapeError?.includes('(Reported)') ? 'Issue Reported' : 'Report this issue'}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

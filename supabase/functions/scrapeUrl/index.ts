@@ -214,6 +214,8 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
+        // Important change: Return 200 status code with error info in the response body
+        // This way, the client can still access the scrape_log_id and error details
         return new Response(
           JSON.stringify({
             scrape_log_id: scrapeLog?.id,
@@ -221,7 +223,7 @@ serve(async (req) => {
             details: errorMessage
           }),
           { 
-            status: 422,
+            status: 200, // Changed from 422 to 200
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
@@ -249,6 +251,7 @@ serve(async (req) => {
         console.error('Error logging scrape attempt:', logError);
       }
 
+      // Return a 200 status with error details
       return new Response(
         JSON.stringify({
           scrape_log_id: scrapeLog?.id,
@@ -256,7 +259,7 @@ serve(async (req) => {
           details: `Connection to Python API failed: ${fetchError.message}`
         }),
         { 
-          status: 422,
+          status: 200, // Changed from 422 to 200
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
