@@ -9,13 +9,182 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      custom_instructions: {
+        Row: {
+          created_at: string
+          id: string
+          instructions_text: string | null
+          is_active: boolean
+          priority: number
+          updated_at: string
+          url_pattern: string
+          use_playwright: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructions_text?: string | null
+          is_active?: boolean
+          priority?: number
+          updated_at?: string
+          url_pattern: string
+          use_playwright?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructions_text?: string | null
+          is_active?: boolean
+          priority?: number
+          updated_at?: string
+          url_pattern?: string
+          use_playwright?: boolean
+        }
+        Relationships: []
+      }
+      happenings: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_datetime: string | null
+          id: string
+          location: string | null
+          scrape_log_id: string | null
+          source_url: string | null
+          start_datetime: string
+          status: string
+          submitter_user_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_datetime?: string | null
+          id?: string
+          location?: string | null
+          scrape_log_id?: string | null
+          source_url?: string | null
+          start_datetime: string
+          status?: string
+          submitter_user_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_datetime?: string | null
+          id?: string
+          location?: string | null
+          scrape_log_id?: string | null
+          source_url?: string | null
+          start_datetime?: string
+          status?: string
+          submitter_user_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scrape_logs: {
+        Row: {
+          created_at: string
+          custom_instruction_id_used: string | null
+          error_message: string | null
+          id: string
+          is_reported_bad: boolean
+          parsed_event_data: Json | null
+          playwright_flag_used: boolean
+          raw_llm_response: Json | null
+          requested_by_user_id: string
+          url_scraped: string
+        }
+        Insert: {
+          created_at?: string
+          custom_instruction_id_used?: string | null
+          error_message?: string | null
+          id?: string
+          is_reported_bad?: boolean
+          parsed_event_data?: Json | null
+          playwright_flag_used: boolean
+          raw_llm_response?: Json | null
+          requested_by_user_id: string
+          url_scraped: string
+        }
+        Update: {
+          created_at?: string
+          custom_instruction_id_used?: string | null
+          error_message?: string | null
+          id?: string
+          is_reported_bad?: boolean
+          parsed_event_data?: Json | null
+          playwright_flag_used?: boolean
+          raw_llm_response?: Json | null
+          requested_by_user_id?: string
+          url_scraped?: string
+        }
+        Relationships: []
+      }
+      user_attendance: {
+        Row: {
+          created_at: string
+          happening_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          happening_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          happening_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_attendance_happening_id_fkey"
+            columns: ["happening_id"]
+            isOneToOne: false
+            referencedRelation: "happenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

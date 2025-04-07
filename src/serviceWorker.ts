@@ -2,16 +2,10 @@
 // This optional code is used to register a service worker.
 // This lets the app load faster on subsequent visits and gives it offline capabilities.
 
-// Define the window interface with the service worker properties
-declare global {
-  interface Window {
-    skipWaiting?: () => void;
-    clients?: {
-      claim: () => void;
-    };
-    registration?: ServiceWorkerRegistration;
-  }
-}
+// Define the service worker specific event interface
+type ExtendedEvent = Event & {
+  waitUntil: (promise: Promise<any>) => void;
+};
 
 // This code executes in the service worker context
 self.addEventListener('install', () => {
@@ -20,7 +14,7 @@ self.addEventListener('install', () => {
   }
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: ExtendedEvent) => {
   event.waitUntil(
     Promise.all([
       // Take control of all clients as soon as the service worker activates
