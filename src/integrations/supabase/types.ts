@@ -181,9 +181,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_update_profile: {
+        Args: { user_id: string; target_user_id: string; new_role: string }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      is_admin_user: {
+        Args: { user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
