@@ -40,10 +40,18 @@ interface WindowClient extends Client {
   navigate(url: string): Promise<WindowClient | null>;
 }
 
-interface ServiceWorkerGlobalScope extends WindowOrWorkerGlobalScope {
+// Properly define ServiceWorkerGlobalScope as its own interface
+interface ServiceWorkerGlobalScope {
   skipWaiting(): Promise<void>;
   clients: Clients;
   addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  // Include WindowOrWorkerGlobalScope properties
+  setTimeout: typeof setTimeout;
+  clearTimeout: typeof clearTimeout;
+  setInterval: typeof setInterval;
+  clearInterval: typeof clearInterval;
+  fetch: typeof fetch;
+  caches: CacheStorage;
 }
 
 // This code executes in the service worker context
