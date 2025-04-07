@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -69,16 +68,15 @@ const Submit = () => {
 
   const handleScrape = async () => {
     if (!urlToScrape) {
-      toast('Please enter a URL to scrape', {
+      toast.error('Please enter a URL to scrape', {
         description: 'The URL field cannot be empty'
       });
       return;
     }
 
     if (!urlToScrape.startsWith('http')) {
-      toast('Please enter a valid URL', {
-        description: 'The URL must start with http:// or https://',
-        variant: 'destructive'
+      toast.error('Please enter a valid URL', {
+        description: 'The URL must start with http:// or https://'
       });
       return;
     }
@@ -101,38 +99,31 @@ const Submit = () => {
 
       console.log('Scrape function response:', response);
 
-      // The edge function now always returns a 200 status with data in the response
       if (response.error) {
-        // This is a connection error to the edge function itself
         throw new Error(response.error.message || 'Failed to connect to event scraper');
       }
 
       const data = response.data;
       
-      // Store the scrape log ID regardless of success/failure
       if (data.scrape_log_id) {
         setScrapeLogId(data.scrape_log_id);
       }
 
       if (data.data) {
-        // Successful scrape with event data
         populateFormWithScrapeData(data.data, urlToScrape);
-        toast('Successfully scraped event details!');
+        toast.success('Successfully scraped event details!');
       } else if (data.error) {
-        // Scrape function ran but couldn't extract event data
         setScrapeError(data.details || data.error);
         throw new Error(data.error + (data.details ? ': ' + data.details : ''));
       } else {
-        // Unexpected response format
         setScrapeError('No event data or error details returned');
         throw new Error('No event data found in the response');
       }
     } catch (error: any) {
       console.error('Scrape error:', error);
       setScrapeError(error.message || 'Failed to scrape event details');
-      toast('Error', {
-        description: error.message || 'Failed to scrape event details',
-        variant: 'destructive'
+      toast.error('Failed to scrape event details', {
+        description: error.message || 'An unknown error occurred'
       });
     } finally {
       setScraping(false);
@@ -184,16 +175,15 @@ const Submit = () => {
 
       if (error) throw error;
       
-      toast('Thank you for reporting this issue', {
+      toast.success('Thank you for reporting this issue', {
         description: 'We will look into it.'
       });
       
       setScrapeError(prev => prev ? `${prev} (Reported)` : null);
     } catch (error: any) {
       console.error('Error reporting bad scrape:', error);
-      toast('Error', {
-        description: error.message || 'Failed to report issue',
-        variant: 'destructive'
+      toast.error('Failed to report issue', {
+        description: error.message || 'Please try again later'
       });
     } finally {
       setReportingIssue(false);
@@ -204,16 +194,12 @@ const Submit = () => {
     e.preventDefault();
     
     if (!user) {
-      toast('You must be signed in to submit events', {
-        variant: 'destructive'
-      });
+      toast.error('You must be signed in to submit events');
       return;
     }
     
     if (!formData.title || !formData.start_date || !formData.start_time) {
-      toast('Please fill in all required fields', {
-        variant: 'destructive'
-      });
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -231,7 +217,6 @@ const Submit = () => {
         endDateTime.setHours(endHours, endMinutes);
       }
 
-      // Set status based on user role
       const status = isCurator || isAdmin ? 'approved' : 'pending';
       
       const eventData = {
@@ -252,7 +237,7 @@ const Submit = () => {
 
       if (error) throw error;
 
-      toast('Success', {
+      toast.success('Success', {
         description: isCurator || isAdmin 
           ? 'Your event has been submitted and is now live!' 
           : 'Your event has been submitted and will be reviewed by a curator.'
@@ -261,9 +246,8 @@ const Submit = () => {
       navigate('/');
     } catch (error: any) {
       console.error('Error submitting event:', error);
-      toast('Error', {
-        description: error.message || 'Failed to submit event',
-        variant: 'destructive'
+      toast.error('Failed to submit event', {
+        description: error.message || 'Please try again later'
       });
     } finally {
       setSubmitting(false);
