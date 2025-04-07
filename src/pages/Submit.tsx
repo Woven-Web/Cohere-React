@@ -94,34 +94,27 @@ const Submit = () => {
         throw new Error('You must be signed in to scrape URLs');
       }
       
-      const response = await fetch('https://zdngnhaxibiplkdyfoiy.supabase.co/functions/v1/scrapeUrl', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ url: urlToScrape })
+      const { data, error } = await supabase.functions.invoke('scrapeUrl', {
+        body: { url: urlToScrape }
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.details || result.error || 'Failed to scrape event details');
+      if (error) {
+        throw new Error(error.message || 'Failed to scrape event details');
       }
 
-      if (result.scrape_log_id) {
-        setScrapeLogId(result.scrape_log_id);
+      if (data.scrape_log_id) {
+        setScrapeLogId(data.scrape_log_id);
       }
 
-      if (result.data) {
-        populateFormWithScrapeData(result.data, urlToScrape);
+      if (data.data) {
+        populateFormWithScrapeData(data.data, urlToScrape);
         toast({
           title: 'Success',
           description: 'Successfully scraped event details!',
           variant: 'default'
         });
       } else {
-        throw new Error('No event data found');
+        throw new Error(data.error || 'No event data found');
       }
     } catch (error: any) {
       console.error('Scrape error:', error);
