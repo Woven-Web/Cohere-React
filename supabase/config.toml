@@ -1,5 +1,29 @@
 
-project_id = "zdngnhaxibiplkdyfoiy"
+project_id = "whatever-value-is-here-already"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[auth]
+enabled = true
+port = 54325
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
 
 [functions.scrapeUrl]
 verify_jwt = true

@@ -113,6 +113,6 @@
   }
 
   .nav-link-active {
-    @apply bg-primary/10 text-primary font-semibold;
+    @apply bg-yellow-600 text-white font-semibold;
   }
 }
