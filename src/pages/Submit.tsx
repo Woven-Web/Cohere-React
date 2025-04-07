@@ -69,18 +69,15 @@ const Submit = () => {
 
   const handleScrape = async () => {
     if (!urlToScrape) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a URL to scrape',
-        variant: 'destructive'
+      toast('Please enter a URL to scrape', {
+        description: 'The URL field cannot be empty'
       });
       return;
     }
 
     if (!urlToScrape.startsWith('http')) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a valid URL starting with http:// or https://',
+      toast('Please enter a valid URL', {
+        description: 'The URL must start with http:// or https://',
         variant: 'destructive'
       });
       return;
@@ -120,10 +117,7 @@ const Submit = () => {
       if (data.data) {
         // Successful scrape with event data
         populateFormWithScrapeData(data.data, urlToScrape);
-        toast({
-          title: 'Success',
-          description: 'Successfully scraped event details!',
-        });
+        toast('Successfully scraped event details!');
       } else if (data.error) {
         // Scrape function ran but couldn't extract event data
         setScrapeError(data.details || data.error);
@@ -136,8 +130,7 @@ const Submit = () => {
     } catch (error: any) {
       console.error('Scrape error:', error);
       setScrapeError(error.message || 'Failed to scrape event details');
-      toast({
-        title: 'Error',
+      toast('Error', {
         description: error.message || 'Failed to scrape event details',
         variant: 'destructive'
       });
@@ -191,16 +184,14 @@ const Submit = () => {
 
       if (error) throw error;
       
-      toast({
-        title: 'Thank you',
-        description: 'Thank you for reporting this issue. We will look into it.',
+      toast('Thank you for reporting this issue', {
+        description: 'We will look into it.'
       });
       
       setScrapeError(prev => prev ? `${prev} (Reported)` : null);
     } catch (error: any) {
       console.error('Error reporting bad scrape:', error);
-      toast({
-        title: 'Error',
+      toast('Error', {
         description: error.message || 'Failed to report issue',
         variant: 'destructive'
       });
@@ -213,18 +204,14 @@ const Submit = () => {
     e.preventDefault();
     
     if (!user) {
-      toast({
-        title: 'Error',
-        description: 'You must be signed in to submit events',
+      toast('You must be signed in to submit events', {
         variant: 'destructive'
       });
       return;
     }
     
     if (!formData.title || !formData.start_date || !formData.start_time) {
-      toast({
-        title: 'Error',
-        description: 'Please fill in all required fields',
+      toast('Please fill in all required fields', {
         variant: 'destructive'
       });
       return;
@@ -265,18 +252,16 @@ const Submit = () => {
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
+      toast('Success', {
         description: isCurator || isAdmin 
           ? 'Your event has been submitted and is now live!' 
-          : 'Your event has been submitted and will be reviewed by a curator.',
+          : 'Your event has been submitted and will be reviewed by a curator.'
       });
       
       navigate('/');
     } catch (error: any) {
       console.error('Error submitting event:', error);
-      toast({
-        title: 'Error',
+      toast('Error', {
         description: error.message || 'Failed to submit event',
         variant: 'destructive'
       });
