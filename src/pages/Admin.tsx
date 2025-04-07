@@ -5,7 +5,8 @@ import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PendingEventsList from '@/components/events/PendingEventsList';
-import { ClipboardList, Settings, Users } from 'lucide-react';
+import { ClipboardList, Settings, Users, Flag } from 'lucide-react';
+import EventFlagsList from '@/components/admin/EventFlagsList';
 
 // Import admin-only components here
 // import UserManagement from '@/components/admin/UserManagement';
@@ -33,10 +34,15 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-1 md:grid-cols-3">
+        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-1 md:grid-cols-4">
           <TabsTrigger value="pending-events" className="flex items-center">
             <ClipboardList className="mr-2 h-4 w-4" />
             <span>Pending Events</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="event-flags" className="flex items-center">
+            <Flag className="mr-2 h-4 w-4" />
+            <span>Event Flags</span>
           </TabsTrigger>
           
           {isAdmin && (
@@ -64,6 +70,20 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <PendingEventsList />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="event-flags">
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Flags</CardTitle>
+              <CardDescription>
+                Review and resolve reported issues with events
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EventFlagsList />
             </CardContent>
           </Card>
         </TabsContent>

@@ -4,17 +4,22 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase, Happening } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Link2, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { AttendButton } from '@/components/events/AttendButton';
+import FlagEventButton from '@/components/events/FlagEventButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<Happening | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isCurator, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
@@ -38,6 +43,12 @@ const EventDetail = () => {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditEvent = () => {
+    if (event && id) {
+      navigate(`/admin/edit-event/${id}`);
     }
   };
 
@@ -92,12 +103,35 @@ const EventDetail = () => {
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to all events
         </Link>
-        <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
-        {event.status !== 'approved' && (
-          <Badge variant={event.status === 'pending' ? 'outline' : 'destructive'} className="mb-2">
-            {event.status}
-          </Badge>
-        )}
+        
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
+            {event.status !== 'approved' && (
+              <Badge variant={event.status === 'pending' ? 'outline' : 'destructive'} className="mb-2">
+                {event.status}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="flex space-x-2">
+            {(isCurator || isAdmin) && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleEditEvent}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Event
+              </Button>
+            )}
+            
+            {user && (
+              <FlagEventButton eventId={event.id} />
+            )}
+          </div>
+        </div>
       </div>
 
       <Card>

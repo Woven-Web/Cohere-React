@@ -42,6 +42,50 @@ export type Database = {
         }
         Relationships: []
       }
+      event_flags: {
+        Row: {
+          changes_requested: string
+          created_at: string
+          flagger_user_id: string
+          happening_id: string
+          id: string
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          changes_requested: string
+          created_at?: string
+          flagger_user_id: string
+          happening_id: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          changes_requested?: string
+          created_at?: string
+          flagger_user_id?: string
+          happening_id?: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_flags_happening_id_fkey"
+            columns: ["happening_id"]
+            isOneToOne: false
+            referencedRelation: "happenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       happenings: {
         Row: {
           created_at: string

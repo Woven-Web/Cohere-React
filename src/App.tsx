@@ -10,6 +10,7 @@ import EventList from "./pages/EventList";
 import CalendarView from "./pages/CalendarView";
 import MapView from "./pages/MapView";
 import EventDetail from "./pages/EventDetail";
+import EditEvent from "./pages/EditEvent";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Submit from "./pages/Submit";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/calendar" element={<MainLayout><CalendarView /></MainLayout>} />
             <Route path="/map" element={<MainLayout><MapView /></MainLayout>} />
             <Route path="/event/:id" element={<MainLayout><EventDetail /></MainLayout>} />
+            <Route path="/admin/edit-event/:id" element={<MainLayout><EditEvent /></MainLayout>} />
             <Route path="/signin" element={<MainLayout><SignIn /></MainLayout>} />
             <Route path="/signup" element={<MainLayout><SignUp /></MainLayout>} />
             <Route path="/submit" element={<MainLayout><Submit /></MainLayout>} />
