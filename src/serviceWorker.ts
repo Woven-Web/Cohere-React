@@ -8,17 +8,17 @@ type ExtendedEvent = Event & {
 };
 
 // This code executes in the service worker context
+declare const self: ServiceWorkerGlobalScope;
+
 self.addEventListener('install', () => {
-  if (self.skipWaiting) {
-    self.skipWaiting();
-  }
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event: ExtendedEvent) => {
   event.waitUntil(
     Promise.all([
       // Take control of all clients as soon as the service worker activates
-      self.clients?.claim(),
+      self.clients.claim(),
       // Delete outdated caches
       caches.keys().then(cacheNames => {
         return Promise.all(

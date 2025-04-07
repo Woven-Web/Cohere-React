@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Happening } from '@/lib/supabase';
+import { Happening } from '@/lib/supabase-client';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AttendButton } from './AttendButton';
