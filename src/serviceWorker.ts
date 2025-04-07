@@ -7,45 +7,34 @@ type ExtendedEvent = Event & {
   waitUntil: (promise: Promise<any>) => void;
 };
 
-// Define WindowOrWorkerGlobalScope interface first
-interface WindowOrWorkerGlobalScope {
-  setTimeout: typeof setTimeout;
-  clearTimeout: typeof clearTimeout;
-  setInterval: typeof setInterval;
-  clearInterval: typeof clearInterval;
-  fetch: typeof fetch;
-  caches: CacheStorage;
-}
-
-// Add the missing type definitions for ServiceWorkerGlobalScope and Clients
-interface Clients {
-  claim(): Promise<void>;
-  get(id: string): Promise<Client | undefined>;
-  matchAll(options?: ClientQueryOptions): Promise<Client[]>;
-  openWindow(url: string): Promise<WindowClient | null>;
-}
+// Define interface for ClientType and Client
+type ClientType = "window" | "worker" | "sharedworker" | "all";
 
 interface ClientQueryOptions {
   includeUncontrolled?: boolean;
   type?: ClientType;
 }
 
-type ClientType = "window" | "worker" | "sharedworker" | "all";
-type Client = WindowClient | Worker | SharedWorker;
-
-interface WindowClient extends Client {
+interface WindowClient {
   focused: boolean;
   visibilityState: DocumentVisibilityState;
   focus(): Promise<WindowClient>;
   navigate(url: string): Promise<WindowClient | null>;
 }
 
-// Properly define ServiceWorkerGlobalScope as its own interface
+// Define the Clients interface
+interface Clients {
+  claim(): Promise<void>;
+  get(id: string): Promise<WindowClient | undefined>;
+  matchAll(options?: ClientQueryOptions): Promise<WindowClient[]>;
+  openWindow(url: string): Promise<WindowClient | null>;
+}
+
+// Define ServiceWorkerGlobalScope as a standalone interface with all necessary properties
 interface ServiceWorkerGlobalScope {
   skipWaiting(): Promise<void>;
   clients: Clients;
   addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  // Include WindowOrWorkerGlobalScope properties
   setTimeout: typeof setTimeout;
   clearTimeout: typeof clearTimeout;
   setInterval: typeof setInterval;
