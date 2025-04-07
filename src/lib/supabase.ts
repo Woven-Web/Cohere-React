@@ -1,19 +1,14 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/supabase';
+import type { Database } from '../types/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use the values from the automatically generated client
+import { supabase as generatedClient } from '@/integrations/supabase/client';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please connect your project to Supabase.');
-}
+// Export the pre-configured client from the integrations folder
+export const supabase = generatedClient;
 
-export const supabase = createClient<Database>(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
-);
-
+// Re-export the types for convenience
 export type Tables = Database['public']['Tables'];
 export type UserProfile = Tables['user_profiles']['Row'];
 export type Happening = Tables['happenings']['Row'];
