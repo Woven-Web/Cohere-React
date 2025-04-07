@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Clock, MapPin, Link2, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, Link2, Loader2, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface EventFormData {
   title: string;
@@ -60,6 +61,12 @@ const EventForm: React.FC<EventFormProps> = ({
   const navigate = useNavigate();
   const [formData, setFormData] = useState<EventFormData>(initialData);
   const [submitting, setSubmitting] = useState(false);
+  const [isPastEvent, setIsPastEvent] = useState(false);
+
+  // Check if date is in the past when dates change
+  useEffect(() => {
+    checkIfPastEvent();
+  }, [formData.start_date, formData.start_time]);
 
   // Update form data when scrape data changes
   useEffect(() => {
@@ -71,6 +78,19 @@ const EventForm: React.FC<EventFormProps> = ({
       );
     }
   }, [scrapeData]);
+
+  const checkIfPastEvent = () => {
+    if (formData.start_date && formData.start_time) {
+      const startDateTime = new Date(formData.start_date);
+      const [startHours, startMinutes] = formData.start_time.split(':').map(Number);
+      startDateTime.setHours(startHours, startMinutes);
+      
+      const now = new Date();
+      setIsPastEvent(startDateTime < now);
+    } else {
+      setIsPastEvent(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -95,6 +115,12 @@ const EventForm: React.FC<EventFormProps> = ({
         const startDate = new Date(data.start_datetime);
         updates.start_date = startDate;
         updates.start_time = format(startDate, 'HH:mm');
+        
+        // Check if the event is in the past after populating the form
+        const now = new Date();
+        if (startDate < now) {
+          setIsPastEvent(true);
+        }
       } catch (error) {
         console.error('Error parsing start_datetime:', error);
       }
@@ -187,6 +213,16 @@ const EventForm: React.FC<EventFormProps> = ({
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
+          {isPastEvent && (
+            <Alert variant="destructive" className="bg-yellow-50 border-yellow-300">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle className="text-yellow-800">Past Event Warning</AlertTitle>
+              <AlertDescription className="text-yellow-700">
+                The event date appears to be in the past. Please verify this is correct before submitting.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input
@@ -217,9 +253,12 @@ const EventForm: React.FC<EventFormProps> = ({
                   <Button
                     id="start_date"
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      isPastEvent && "border-yellow-500 text-yellow-700"
+                    )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className={cn("mr-2 h-4 w-4", isPastEvent && "text-yellow-600")} />
                     {formData.start_date ? (
                       format(formData.start_date, "PPP")
                     ) : (
@@ -241,7 +280,7 @@ const EventForm: React.FC<EventFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="start_time">Start Time *</Label>
               <div className="flex items-center">
-                <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                <Clock className={cn("mr-2 h-4 w-4", isPastEvent ? "text-yellow-600" : "text-muted-foreground")} />
                 <Input
                   id="start_time"
                   name="start_time"
@@ -249,6 +288,7 @@ const EventForm: React.FC<EventFormProps> = ({
                   value={formData.start_time}
                   onChange={handleInputChange}
                   required
+                  className={cn(isPastEvent && "border-yellow-500")}
                 />
               </div>
             </div>

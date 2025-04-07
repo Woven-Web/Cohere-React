@@ -71,6 +71,19 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       }
 
       if (data.data) {
+        // Check if event is in the past
+        if (data.data.start_datetime) {
+          const eventDate = new Date(data.data.start_datetime);
+          const now = new Date();
+          
+          if (eventDate < now) {
+            toast.warning('Past event detected', {
+              description: 'The scraped event appears to be in the past. Please verify the date is correct.',
+              duration: 10000,
+            });
+          }
+        }
+        
         onScrapedData(data.data, urlToScrape, data.scrape_log_id);
         toast.success('Successfully scraped event details!');
       } else if (data.error) {
