@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Happening, ScrapeLog, CustomInstruction, UserProfile } from '@/lib/supabase';
@@ -442,7 +441,7 @@ const Admin = () => {
                             {log.error_message ? (
                               <Badge variant="destructive">Failed</Badge>
                             ) : log.parsed_event_data ? (
-                              <Badge variant="success" className="bg-green-600">Success</Badge>
+                              <Badge variant="default" className="bg-green-600">Success</Badge>
                             ) : (
                               <Badge variant="outline">Partial</Badge>
                             )}
