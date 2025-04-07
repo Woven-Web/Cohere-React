@@ -23,8 +23,13 @@ import {
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
+type ExtendedScrapeLog = ScrapeLog & {
+  user_profiles?: { role: string } | null;
+  custom_instructions?: { url_pattern: string } | null;
+};
+
 const ScrapeLogsList = () => {
-  const [selectedLog, setSelectedLog] = useState<ScrapeLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<ExtendedScrapeLog | null>(null);
 
   const { data: logs, isLoading, error } = useQuery({
     queryKey: ['scrape-logs'],
@@ -39,10 +44,9 @@ const ScrapeLogsList = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as (ScrapeLog & { 
-        user_profiles: { role: string }; 
-        custom_instructions: { url_pattern: string } | null;
-      })[];
+      
+      // Type assertion to ensure proper typing
+      return (data || []) as ExtendedScrapeLog[];
     },
   });
 
