@@ -42,6 +42,41 @@ export interface Database {
           is_active?: boolean
         }
       }
+      event_flags: {
+        Row: {
+          id: string
+          happening_id: string
+          flagger_user_id: string
+          changes_requested: string
+          status: 'pending' | 'resolved' | 'rejected'
+          created_at: string
+          updated_at: string
+          resolved_by_user_id: string | null
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string
+          happening_id: string
+          flagger_user_id: string
+          changes_requested: string
+          status?: 'pending' | 'resolved' | 'rejected'
+          created_at?: string
+          updated_at?: string
+          resolved_by_user_id?: string | null
+          resolved_at?: string | null
+        }
+        Update: {
+          id?: string
+          happening_id?: string
+          flagger_user_id?: string
+          changes_requested?: string
+          status?: 'pending' | 'resolved' | 'rejected'
+          created_at?: string
+          updated_at?: string
+          resolved_by_user_id?: string | null
+          resolved_at?: string | null
+        }
+      }
       happenings: {
         Row: {
           id: string

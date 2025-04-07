@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Check, X, ExternalLink, Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,21 +11,14 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { Database } from '@/integrations/supabase/types';
 
-interface EventFlag {
-  id: string;
-  happening_id: string;
-  flagger_user_id: string;
-  changes_requested: string;
-  status: 'pending' | 'resolved' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  resolved_by_user_id: string | null;
-  resolved_at: string | null;
+// Define the type for EventFlag with correct structure
+type EventFlag = Database['public']['Tables']['event_flags']['Row'] & {
   happening: {
     title: string;
   };
-}
+};
 
 const EventFlagsList = () => {
   const queryClient = useQueryClient();
@@ -39,7 +32,10 @@ const EventFlagsList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_flags')
-        .select('*, happening:happenings(title)')
+        .select(`
+          *,
+          happening:happenings(title)
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
