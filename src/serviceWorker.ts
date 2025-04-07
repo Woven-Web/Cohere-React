@@ -7,6 +7,16 @@ type ExtendedEvent = Event & {
   waitUntil: (promise: Promise<any>) => void;
 };
 
+// Define WindowOrWorkerGlobalScope interface first
+interface WindowOrWorkerGlobalScope {
+  setTimeout: typeof setTimeout;
+  clearTimeout: typeof clearTimeout;
+  setInterval: typeof setInterval;
+  clearInterval: typeof clearInterval;
+  fetch: typeof fetch;
+  caches: CacheStorage;
+}
+
 // Add the missing type definitions for ServiceWorkerGlobalScope and Clients
 interface Clients {
   claim(): Promise<void>;
