@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { CheckCircle, XCircle, EyeIcon, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, EyeIcon, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -11,10 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Happening } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 
 const PendingEventsList = () => {
   const queryClient = useQueryClient();
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
   // Query for pending events
   const { data: pendingEvents, isLoading, error } = useQuery({
@@ -57,12 +69,39 @@ const PendingEventsList = () => {
     }
   });
 
+  // Mutation for deleting events
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('happenings')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingEvents'] });
+      toast.success('Event deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error('Failed to delete event', {
+        description: error.message
+      });
+    }
+  });
+
   const handleApprove = (id: string) => {
     updateEventStatusMutation.mutate({ id, status: 'approved' });
   };
 
   const handleReject = (id: string) => {
     updateEventStatusMutation.mutate({ id, status: 'rejected' });
+  };
+
+  const handleDelete = (id: string) => {
+    deleteEventMutation.mutate(id);
+    setEventToDelete(null);
   };
 
   const toggleExpand = (id: string) => {
@@ -183,22 +222,54 @@ const PendingEventsList = () => {
           </CardContent>
           
           <CardFooter className="flex justify-end space-x-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  disabled={deleteEventMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete event</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{event.title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => handleDelete(event.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            
             <Button 
               variant="outline" 
               size="sm"
               className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
               onClick={() => handleReject(event.id)}
-              disabled={updateEventStatusMutation.isPending}
+              disabled={updateEventStatusMutation.isPending || deleteEventMutation.isPending}
             >
               <XCircle className="h-4 w-4 mr-1" />
               Reject
             </Button>
+            
             <Button 
               variant="default" 
               size="sm"
               className="bg-green-600 hover:bg-green-700"
               onClick={() => handleApprove(event.id)}
-              disabled={updateEventStatusMutation.isPending}
+              disabled={updateEventStatusMutation.isPending || deleteEventMutation.isPending}
             >
               <CheckCircle className="h-4 w-4 mr-1" />
               Approve

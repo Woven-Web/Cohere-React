@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase, Happening } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit } from 'lucide-react';
+import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +12,24 @@ import { AttendButton } from '@/components/events/AttendButton';
 import FlagEventButton from '@/components/events/FlagEventButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<Happening | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, isCurator, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +62,30 @@ const EventDetail = () => {
   const handleEditEvent = () => {
     if (event && id) {
       navigate(`/admin/edit-event/${id}`);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!id) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('happenings')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Event deleted successfully');
+      navigate('/');
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      toast.error('Failed to delete event', {
+        description: error.message
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -116,15 +153,48 @@ const EventDetail = () => {
           
           <div className="flex space-x-2">
             {(isCurator || isAdmin) && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleEditEvent}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Event
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleEditEvent}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                      disabled={deleting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete event</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete "{event.title}"? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDeleteEvent}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
             
             {user && (
