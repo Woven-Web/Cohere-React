@@ -51,6 +51,9 @@ const Admin = () => {
   });
   const [editingInstruction, setEditingInstruction] = useState<CustomInstruction | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [testUrl, setTestUrl] = useState('');
+  const [testUrlResult, setTestUrlResult] = useState<string | null>(null);
+  const [testUrlLoading, setTestUrlLoading] = useState(false);
 
   useEffect(() => {
     if (isCurator) {
@@ -269,6 +272,33 @@ const Admin = () => {
         description: error.message
       });
     }
+  };
+
+  const testUrlPatternMatch = () => {
+    if (!testUrl) {
+      setTestUrlResult('Please enter a URL to test');
+      return;
+    }
+    
+    setTestUrlLoading(true);
+    
+    // Find matching custom instruction based on URL pattern and priority
+    const matches = customInstructions
+      .filter(instruction => instruction.is_active && testUrl.includes(instruction.url_pattern))
+      .sort((a, b) => b.priority - a.priority);
+    
+    if (matches.length === 0) {
+      setTestUrlResult('No active custom instructions match this URL');
+    } else {
+      const bestMatch = matches[0];
+      setTestUrlResult(`
+        Best match: "${bestMatch.url_pattern}" (Priority: ${bestMatch.priority})
+        Will use Playwright: ${bestMatch.use_playwright ? 'Yes' : 'No'}
+        Custom instructions: ${bestMatch.instructions_text || 'None'}
+      `);
+    }
+    
+    setTestUrlLoading(false);
   };
 
   const updateUserRole = async (userId: string, newRole: 'basic' | 'submitter' | 'curator' | 'admin') => {
@@ -490,6 +520,31 @@ const Admin = () => {
                     </div>
                   ) : (
                     <>
+                      <div className="space-y-4 mb-6">
+                        <h3 className="text-lg font-medium">Test URL Pattern Matching</h3>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-grow">
+                            <Input
+                              placeholder="Enter a URL to test which pattern would match..."
+                              value={testUrl}
+                              onChange={(e) => setTestUrl(e.target.value)}
+                            />
+                          </div>
+                          <Button 
+                            onClick={testUrlPatternMatch}
+                            disabled={testUrlLoading}
+                          >
+                            {testUrlLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Test
+                          </Button>
+                        </div>
+                        {testUrlResult && (
+                          <div className="p-4 border rounded-md whitespace-pre-line">
+                            {testUrlResult}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="rounded-md border mb-6">
                         <Table>
                           <TableHeader>
@@ -554,10 +609,13 @@ const Admin = () => {
                               <Label htmlFor="url_pattern">URL Pattern</Label>
                               <Input
                                 id="url_pattern"
-                                placeholder="e.g., *.eventbrite.com/*"
+                                placeholder="e.g., eventbrite.com"
                                 value={newInstruction.url_pattern}
                                 onChange={(e) => setNewInstruction({ ...newInstruction, url_pattern: e.target.value })}
                               />
+                              <p className="text-sm text-muted-foreground">
+                                Simple substring matching - any URL containing this pattern will match
+                              </p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="priority">Priority</Label>
@@ -567,6 +625,9 @@ const Admin = () => {
                                 value={newInstruction.priority}
                                 onChange={(e) => setNewInstruction({ ...newInstruction, priority: parseInt(e.target.value) || 0 })}
                               />
+                              <p className="text-sm text-muted-foreground">
+                                Higher priority rules are applied first when multiple patterns match
+                              </p>
                             </div>
                           </div>
                           
@@ -579,6 +640,9 @@ const Admin = () => {
                               onChange={(e) => setNewInstruction({ ...newInstruction, instructions_text: e.target.value })}
                               rows={4}
                             />
+                            <p className="text-sm text-muted-foreground">
+                              Custom instructions sent to the LLM to help it extract event details from this site
+                            </p>
                           </div>
 
                           <div className="flex items-center space-x-2">
@@ -587,7 +651,12 @@ const Admin = () => {
                               checked={newInstruction.use_playwright}
                               onCheckedChange={(checked) => setNewInstruction({ ...newInstruction, use_playwright: checked })}
                             />
-                            <Label htmlFor="use_playwright">Use Playwright (for JavaScript-heavy sites)</Label>
+                            <div>
+                              <Label htmlFor="use_playwright">Use Playwright (for JavaScript-heavy sites)</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Enable this for sites that load content dynamically with JavaScript
+                              </p>
+                            </div>
                           </div>
 
                           <Button

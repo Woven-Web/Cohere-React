@@ -99,6 +99,9 @@ serve(async (req) => {
           customInstructionId = instruction.id;
           usePlaywright = instruction.use_playwright;
           customInstructionsText = instruction.instructions_text;
+          console.log(`Matched pattern "${pattern}" with priority ${instruction.priority}`);
+          console.log(`Using Playwright: ${usePlaywright}`);
+          console.log(`Custom instructions: ${customInstructionsText || 'None'}`);
           break;
         }
       }
@@ -133,6 +136,10 @@ serve(async (req) => {
 
     // Call the Python API
     console.log(`Sending request to Python API: ${pythonApiUrl}`);
+    console.log(`With payload: ${JSON.stringify({
+      ...apiPayload,
+      gemini_api_key: "[REDACTED]" // Don't log the actual API key
+    }, null, 2)}`);
     
     try {
       const response = await fetch(pythonApiUrl, {
