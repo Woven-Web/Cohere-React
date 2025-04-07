@@ -7,6 +7,13 @@ type ExtendedEvent = Event & {
   waitUntil: (promise: Promise<any>) => void;
 };
 
+// Add the missing type definition for ServiceWorkerGlobalScope
+// This will resolve the TS2304 error
+interface ServiceWorkerGlobalScope extends WindowOrWorkerGlobalScope {
+  skipWaiting(): Promise<void>;
+  clients: Clients;
+}
+
 // This code executes in the service worker context
 declare const self: ServiceWorkerGlobalScope;
 
