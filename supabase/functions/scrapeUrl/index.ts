@@ -156,13 +156,14 @@ serve(async (req) => {
           rawLlmResponse = JSON.parse(responseText);
           console.log(`Python API response body: ${JSON.stringify(rawLlmResponse, null, 2)}`);
           
-          // Check if the response has the expected structure
+          // Check if the response has the expected structure with non-null required fields
           if (rawLlmResponse.title && 
-              (rawLlmResponse.description !== undefined) && 
-              (rawLlmResponse.start_datetime !== undefined)) {
+              rawLlmResponse.start_datetime) {
+            // Make sure description is at least an empty string if null
+            rawLlmResponse.description = rawLlmResponse.description || '';
             parsedEventData = rawLlmResponse;
           } else {
-            errorMessage = "Python API returned success but with unexpected data structure";
+            errorMessage = "Python API returned success but with missing required fields";
             console.error(errorMessage);
             console.error("Response:", JSON.stringify(rawLlmResponse));
           }

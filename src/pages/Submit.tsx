@@ -96,16 +96,19 @@ const Submit = () => {
         throw new Error('You must be signed in to scrape URLs');
       }
       
-      const { data, error } = await supabase.functions.invoke('scrapeUrl', {
+      const response = await supabase.functions.invoke('scrapeUrl', {
         body: { url: urlToScrape }
       });
 
-      console.log('Scrape function response:', { data, error });
+      console.log('Scrape function response:', response);
 
-      if (error) {
-        throw new Error(error.message || 'Failed to scrape event details');
+      // Handle the response
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to scrape event details');
       }
 
+      const data = response.data;
+      
       if (data.scrape_log_id) {
         setScrapeLogId(data.scrape_log_id);
       }
@@ -115,10 +118,11 @@ const Submit = () => {
         toast({
           title: 'Success',
           description: 'Successfully scraped event details!',
-          variant: 'default'
         });
+      } else if (data.error) {
+        throw new Error(data.error + (data.details ? ': ' + data.details : ''));
       } else {
-        throw new Error(data.error || 'No event data found');
+        throw new Error('No event data found in the response');
       }
     } catch (error: any) {
       console.error('Scrape error:', error);
@@ -143,15 +147,23 @@ const Submit = () => {
     };
 
     if (data.start_datetime) {
-      const startDate = new Date(data.start_datetime);
-      updates.start_date = startDate;
-      updates.start_time = format(startDate, 'HH:mm');
+      try {
+        const startDate = new Date(data.start_datetime);
+        updates.start_date = startDate;
+        updates.start_time = format(startDate, 'HH:mm');
+      } catch (error) {
+        console.error('Error parsing start_datetime:', error);
+      }
     }
 
     if (data.end_datetime) {
-      const endDate = new Date(data.end_datetime);
-      updates.end_date = endDate;
-      updates.end_time = format(endDate, 'HH:mm');
+      try {
+        const endDate = new Date(data.end_datetime);
+        updates.end_date = endDate;
+        updates.end_time = format(endDate, 'HH:mm');
+      } catch (error) {
+        console.error('Error parsing end_datetime:', error);
+      }
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
