@@ -16,6 +16,7 @@ import SignUp from "./pages/SignUp";
 import Submit from "./pages/Submit";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import "./App.css";
 
 const queryClient = new QueryClient();
 
