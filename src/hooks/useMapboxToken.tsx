@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'mapbox_access_token';
+const DEFAULT_TOKEN = 'pk.eyJ1Ijoid292ZW53ZWIiLCJhIjoiY205N2IxeHM3MDVrczJscG9qbTQ0c2ZrZSJ9.hTV-N1S_KisyXQ_QNiFb5A';
 
 export const useMapboxToken = () => {
   const [token, setToken] = useState<string>(() => {
-    // Try to get token from localStorage on initial load
-    return localStorage.getItem(STORAGE_KEY) || '';
+    // Try to get token from localStorage or use default
+    return localStorage.getItem(STORAGE_KEY) || DEFAULT_TOKEN;
   });
 
   const [isValid, setIsValid] = useState<boolean>(!!token);
