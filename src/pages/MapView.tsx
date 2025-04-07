@@ -25,9 +25,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useMediaQuery } from '@/hooks/use-mobile';
-import EventFilters from '@/components/events/EventFilters';
-import { useEventFilters, calculateDistance } from '@/hooks/useEventFilters';
+import { useEventFilters } from '@/hooks/useEventFilters';
 import MobileEventList from '@/components/events/MobileEventList';
+import EventFiltersBar from '@/components/events/EventFiltersBar';
 
 const BOULDER_COORDINATES: [number, number] = [-105.2705, 40.0150];
 const DEFAULT_ZOOM = 12;
@@ -394,17 +394,19 @@ const MapView = () => {
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Event Map</h1>
         <p className="text-muted-foreground mb-4">
           Discover events by location
         </p>
         
-        <EventFilters 
+        {/* Integrated filters directly on the page */}
+        <EventFiltersBar 
           filters={filters}
           setFilters={setFilters}
           onReset={resetFilters}
-          compact={isMobile}
+          inline={!isMobile}
+          className="mb-4"
         />
       </div>
       

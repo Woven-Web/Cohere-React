@@ -2,37 +2,21 @@
 import React, { useEffect, useState } from 'react';
 import { supabase, Happening } from '@/lib/supabase';
 import EventCard from '@/components/events/EventCard';
-import { Input } from '@/components/ui/input';
+import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Search, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import EventFiltersBar from '@/components/events/EventFiltersBar';
+import { useEventFilters } from '@/hooks/useEventFilters';
 
 const EventList = () => {
   const [events, setEvents] = useState<Happening[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
-  const [sortOrder, setSortOrder] = useState<string>('upcoming');
-  const [filteredEvents, setFilteredEvents] = useState<Happening[]>([]);
+  const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
+  const { filters, setFilters, resetFilters, filterEvents } = useEventFilters();
 
   useEffect(() => {
     fetchEvents();
   }, []);
-
-  useEffect(() => {
-    filterAndSortEvents();
-  }, [events, searchQuery, dateFilter, sortOrder]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -45,6 +29,7 @@ const EventList = () => {
 
       if (error) throw error;
       setEvents(data || []);
+      processEventLocations(data || []);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -52,47 +37,35 @@ const EventList = () => {
     }
   };
 
-  const filterAndSortEvents = () => {
-    let filtered = [...events];
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        event => 
-          event.title.toLowerCase().includes(query) || 
-          (event.description && event.description.toLowerCase().includes(query)) ||
-          (event.location && event.location.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply date filter
-    if (dateFilter) {
-      const filterDate = new Date(dateFilter);
-      filterDate.setHours(0, 0, 0, 0);
+  // Process event locations for distance filtering
+  const processEventLocations = async (events: Happening[]) => {
+    if (!filters.userLocation) return;
+    
+    const coordinatesMap: Record<string, [number, number]> = {};
+    await Promise.all(events.map(async (event) => {
+      if (!event.location) return;
       
-      filtered = filtered.filter(event => {
-        const eventDate = new Date(event.start_datetime);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate.getTime() === filterDate.getTime();
-      });
-    }
-
-    // Apply sorting
-    if (sortOrder === 'upcoming') {
-      filtered.sort((a, b) => new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime());
-    } else if (sortOrder === 'recent') {
-      filtered.sort((a, b) => new Date(b.start_datetime).getTime() - new Date(a.start_datetime).getTime());
-    }
-
-    setFilteredEvents(filtered);
+      try {
+        // Simple geocoding simulation - in a real app, use a geocoding service
+        // This is a placeholder for demonstration
+        const parts = event.location.split(',');
+        if (parts.length >= 2) {
+          const lat = parseFloat(parts[0].trim());
+          const lng = parseFloat(parts[1].trim());
+          if (!isNaN(lat) && !isNaN(lng)) {
+            coordinatesMap[event.id] = [lng, lat];
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing location for event ${event.id}:`, error);
+      }
+    }));
+    
+    setEventCoordinates(coordinatesMap);
   };
 
-  const resetFilters = () => {
-    setSearchQuery('');
-    setDateFilter(undefined);
-    setSortOrder('upcoming');
-  };
+  // Apply filters to events
+  const filteredEvents = filterEvents(events, eventCoordinates);
 
   const renderSkeleton = () => {
     return Array(3).fill(0).map((_, index) => (
@@ -114,79 +87,22 @@ const EventList = () => {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold mb-2">Discover Events</h1>
         <p className="text-muted-foreground">
           Find and join happenings in your community
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="md:col-span-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search events..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFilter ? (
-                  format(dateFilter, "PPP")
-                ) : (
-                  <span>Pick a date</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dateFilter}
-                onSelect={setDateFilter}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div>
-          <Select
-            value={sortOrder}
-            onValueChange={setSortOrder}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="upcoming">Upcoming First</SelectItem>
-              <SelectItem value="recent">Recent First</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Use our reusable filters component */}
+      <div className="mb-6">
+        <EventFiltersBar 
+          filters={filters}
+          setFilters={setFilters}
+          onReset={resetFilters}
+          inline={true}
+        />
       </div>
-
-      {(searchQuery || dateFilter) && (
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-sm text-muted-foreground">
-            {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
-          </div>
-          <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Clear Filters
-          </Button>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (

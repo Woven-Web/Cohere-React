@@ -7,16 +7,47 @@ import { Card } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import EventFiltersBar from '@/components/events/EventFiltersBar';
+import { useEventFilters } from '@/hooks/useEventFilters';
 
 const CalendarView = () => {
   const [events, setEvents] = useState<Happening[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
+  const { filters, setFilters, resetFilters, filterEvents } = useEventFilters();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchEventsForMonth();
   }, [currentDate]);
+  
+  // Process event locations for distance filtering
+  const processEventLocations = async (events: Happening[]) => {
+    if (!filters.userLocation) return;
+    
+    const coordinatesMap: Record<string, [number, number]> = {};
+    await Promise.all(events.map(async (event) => {
+      if (!event.location) return;
+      
+      try {
+        // Simple geocoding simulation - in a real app, use a geocoding service
+        // This is a placeholder for demonstration
+        const parts = event.location.split(',');
+        if (parts.length >= 2) {
+          const lat = parseFloat(parts[0].trim());
+          const lng = parseFloat(parts[1].trim());
+          if (!isNaN(lat) && !isNaN(lng)) {
+            coordinatesMap[event.id] = [lng, lat];
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing location for event ${event.id}:`, error);
+      }
+    }));
+    
+    setEventCoordinates(coordinatesMap);
+  };
 
   const fetchEventsForMonth = async () => {
     setLoading(true);
@@ -34,12 +65,16 @@ const CalendarView = () => {
 
       if (error) throw error;
       setEvents(data || []);
+      processEventLocations(data || []);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Apply filters to the events
+  const filteredEvents = filterEvents(events, eventCoordinates);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(currentDate => direction === 'next' 
@@ -54,7 +89,7 @@ const CalendarView = () => {
   });
 
   const getEventsForDay = (day: Date) => {
-    return events.filter(event => {
+    return filteredEvents.filter(event => {
       const eventDate = new Date(event.start_datetime);
       return isSameDay(day, eventDate);
     });
@@ -101,11 +136,22 @@ const CalendarView = () => {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold mb-2">Event Calendar</h1>
         <p className="text-muted-foreground">
           View events by month
         </p>
+      </div>
+      
+      {/* Add filters to Calendar View */}
+      <div className="mb-6">
+        <EventFiltersBar 
+          filters={filters}
+          setFilters={setFilters}
+          onReset={resetFilters}
+          showDateFilter={false} // We don't need date filter in calendar view as the calendar itself handles date navigation
+          inline={true}
+        />
       </div>
       
       <Card className="p-4">
