@@ -1,19 +1,18 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase, Happening } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Calendar, Loader2 } from 'lucide-react';
+import { Navigation, MapPin, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// You need to replace this with your own Mapbox access token
-// Get one at https://account.mapbox.com/
-mapboxgl.accessToken = 'pk.eyJ1IjoiY29oZXJlY2FsZW5kYXIiLCJhIjoiY2xzbjIydXBtMDc5YzJpcWlpMXJtZGVnbSJ9.GKkXksqZFRF9pZzChbPX_w';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface EventWithCoordinates extends Happening {
   coordinates?: [number, number];
@@ -27,11 +26,16 @@ const MapView = () => {
   const [selectedEvent, setSelectedEvent] = useState<EventWithCoordinates | null>(null);
   const [loading, setLoading] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
+  const [validating, setValidating] = useState(false);
+  const { token, setToken, isValid, validateToken } = useMapboxToken();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (isValid) {
+      fetchEvents();
+    }
+  }, [isValid]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -43,7 +47,6 @@ const MapView = () => {
       
       if (error) throw error;
       
-      // Process events to extract coordinates from location strings
       const eventsWithCoordinates = await Promise.all((data || []).map(processEventLocation));
       setEvents(eventsWithCoordinates);
     } catch (error) {
@@ -54,11 +57,10 @@ const MapView = () => {
   };
 
   const processEventLocation = async (event: Happening): Promise<EventWithCoordinates> => {
-    if (!event.location) return event;
+    if (!event.location || !token) return event;
     
     try {
-      // Geocode the location
-      const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(event.location)}.json?access_token=${mapboxgl.accessToken}&limit=1`;
+      const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(event.location)}.json?access_token=${token}&limit=1`;
       const response = await fetch(geocodingUrl);
       const data = await response.json();
       
@@ -77,13 +79,15 @@ const MapView = () => {
   };
 
   useEffect(() => {
-    if (!mapContainer.current || !events.length) return;
+    if (!mapContainer.current || !events.length || !token || !isValid) return;
     
     if (!map.current) {
+      mapboxgl.accessToken = token;
+      
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
-        center: [-74.5, 40], // Default center
+        center: [-74.5, 40],
         zoom: 2
       });
       
@@ -94,7 +98,6 @@ const MapView = () => {
       });
     }
     
-    // Add markers when map is loaded and we have events
     if (mapLoaded && events.length > 0) {
       addMarkersToMap();
     }
@@ -105,16 +108,14 @@ const MapView = () => {
         map.current = null;
       }
     };
-  }, [events, mapLoaded]);
+  }, [events, mapLoaded, token, isValid]);
   
   const addMarkersToMap = () => {
     if (!map.current) return;
     
-    // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
     
-    // Collect all valid coordinates for bounds calculation
     const validCoordinates: mapboxgl.LngLatLike[] = [];
     
     events.forEach(event => {
@@ -138,7 +139,6 @@ const MapView = () => {
       }
     });
     
-    // Fit map to markers if we have any
     if (validCoordinates.length > 0) {
       const bounds = validCoordinates.reduce(
         (bounds, coord) => bounds.extend(coord as [number, number]),
@@ -158,6 +158,22 @@ const MapView = () => {
   
   const formatEventDate = (date: string) => {
     return format(new Date(date), 'MMMM d, yyyy h:mm a');
+  };
+
+  const handleTokenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tokenInput.trim()) return;
+    
+    setValidating(true);
+    try {
+      const isValid = await validateToken(tokenInput);
+      if (isValid) {
+        setToken(tokenInput);
+        setTokenInput('');
+      }
+    } finally {
+      setValidating(false);
+    }
   };
 
   const renderEventList = () => {
@@ -212,6 +228,53 @@ const MapView = () => {
     ));
   };
 
+  if (!token || !isValid) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Event Map</h1>
+          <p className="text-muted-foreground mb-6">
+            Discover events by location
+          </p>
+          
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Mapbox API Key Required</AlertTitle>
+            <AlertDescription>
+              To view the map, you need to provide your Mapbox API key. 
+              Get one for free at <a href="https://account.mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a>.
+            </AlertDescription>
+          </Alert>
+          
+          <form onSubmit={handleTokenSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mapbox-token">Mapbox Access Token</Label>
+              <Input
+                id="mapbox-token"
+                type="text"
+                placeholder="pk.eyJ1Ijoi..."
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                className="font-mono text-sm"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={validating}>
+              {validating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                'Set API Key & Load Map'
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -222,20 +285,16 @@ const MapView = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-16rem)]">
-        {/* Left sidebar with events list */}
         <div className="lg:col-span-1 h-full">
           <ScrollArea className="h-full pr-4">
             {renderEventList()}
           </ScrollArea>
         </div>
 
-        {/* Right side with map and event details */}
         <div className="lg:col-span-2 h-full flex flex-col">
           <div className="relative flex-grow rounded-lg overflow-hidden border">
-            {/* Map container */}
             <div ref={mapContainer} className="absolute inset-0" />
             
-            {/* Loading indicator */}
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50">
                 <div className="flex flex-col items-center">
@@ -245,7 +304,6 @@ const MapView = () => {
               </div>
             )}
             
-            {/* Selected event overlay */}
             {selectedEvent && (
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/90 border-t">
                 <h3 className="font-semibold mb-1">{selectedEvent.title}</h3>
