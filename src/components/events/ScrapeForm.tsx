@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Loader2, Flag, Link2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Flag, Link2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ScrapeFormProps {
   onScrapedData: (data: any, url: string, logId: string | null) => void;
@@ -21,11 +23,14 @@ interface ScrapeResult {
 }
 
 const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
+  const { isAdmin } = useAuth();
   const [urlToScrape, setUrlToScrape] = useState('');
   const [scraping, setScraping] = useState(false);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [scrapeLogId, setScrapeLogId] = useState<string | null>(null);
   const [reportingIssue, setReportingIssue] = useState(false);
+  const [detailedErrorInfo, setDetailedErrorInfo] = useState<any>(null);
+  const [isDetailedErrorOpen, setIsDetailedErrorOpen] = useState(false);
 
   const handleScrape = async () => {
     if (!urlToScrape) {
@@ -45,6 +50,7 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
     setScraping(true);
     setScrapeError(null);
     setScrapeLogId(null);
+    setDetailedErrorInfo(null);
 
     try {
       console.log('Attempting to scrape URL:', urlToScrape);
@@ -88,6 +94,17 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
         toast.success('Successfully scraped event details!');
       } else if (data.error) {
         setScrapeError(data.details || data.error);
+        
+        // Store the full error information for admin detailed view
+        if (isAdmin) {
+          setDetailedErrorInfo({
+            error: data.error,
+            details: data.details,
+            logId: data.scrape_log_id,
+            responseData: data
+          });
+        }
+        
         throw new Error(data.error + (data.details ? ': ' + data.details : ''));
       } else {
         setScrapeError('No event data or error details returned');
@@ -96,11 +113,42 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
     } catch (error: any) {
       console.error('Scrape error:', error);
       setScrapeError(error.message || 'Failed to scrape event details');
+      
+      // Fetch additional error details for admin if we have a log ID
+      if (isAdmin && scrapeLogId) {
+        fetchScrapeLogDetails(scrapeLogId);
+      }
+      
       toast.error('Failed to scrape event details', {
         description: error.message || 'An unknown error occurred'
       });
     } finally {
       setScraping(false);
+    }
+  };
+
+  const fetchScrapeLogDetails = async (logId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('scrape_logs')
+        .select('*')
+        .eq('id', logId)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data) {
+        setDetailedErrorInfo({
+          ...detailedErrorInfo,
+          rawResponse: data.raw_llm_response,
+          errorMessage: data.error_message,
+          usePlaywright: data.playwright_flag_used,
+          url: data.url_scraped,
+          logData: data
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching scrape log details:', err);
     }
   };
 
@@ -172,22 +220,109 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
                 <span className="font-medium text-red-800">Scraping failed</span>
               </div>
               <p className="mt-1 text-red-700">{scrapeError}</p>
-              {scrapeLogId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 text-red-600 border-red-300 hover:bg-red-100 hover:text-red-700"
-                  onClick={reportBadScrape}
-                  disabled={reportingIssue || scrapeError?.includes('(Reported)')}
-                >
-                  {reportingIssue ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Flag className="h-4 w-4 mr-2" />
-                  )}
-                  {scrapeError?.includes('(Reported)') ? 'Issue Reported' : 'Report this issue'}
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {scrapeLogId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-300 hover:bg-red-100 hover:text-red-700"
+                    onClick={reportBadScrape}
+                    disabled={reportingIssue || scrapeError?.includes('(Reported)')}
+                  >
+                    {reportingIssue ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Flag className="h-4 w-4 mr-2" />
+                    )}
+                    {scrapeError?.includes('(Reported)') ? 'Issue Reported' : 'Report this issue'}
+                  </Button>
+                )}
+
+                {isAdmin && detailedErrorInfo && (
+                  <Dialog open={isDetailedErrorOpen} onOpenChange={setIsDetailedErrorOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100 hover:text-blue-700"
+                      >
+                        <Info className="h-4 w-4 mr-2" />
+                        View Detailed Error Info
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+                      <DialogHeader>
+                        <DialogTitle>Detailed Scraping Error Information</DialogTitle>
+                        <DialogDescription>
+                          Technical details for administrators about the scraping failure.
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4 py-4">
+                        <div>
+                          <h3 className="text-sm font-semibold mb-1">URL Attempted</h3>
+                          <div className="bg-muted p-2 rounded-md text-xs break-all">
+                            {detailedErrorInfo.url || urlToScrape}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-semibold mb-1">Error Summary</h3>
+                          <div className="bg-red-50 border border-red-200 p-2 rounded-md text-xs text-red-800">
+                            {detailedErrorInfo.error}: {detailedErrorInfo.details}
+                          </div>
+                        </div>
+                        
+                        {detailedErrorInfo.usePlaywright !== undefined && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-semibold mb-1">Playwright Used</h3>
+                              <div className="text-xs">{detailedErrorInfo.usePlaywright ? 'Yes' : 'No'}</div>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold mb-1">Scrape Log ID</h3>
+                              <div className="text-xs font-mono">{detailedErrorInfo.logId || scrapeLogId}</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {detailedErrorInfo.rawResponse && (
+                          <div>
+                            <h3 className="text-sm font-semibold mb-1">Raw LLM Response</h3>
+                            <div className="bg-muted p-2 rounded-md overflow-auto max-h-40">
+                              <pre className="text-xs whitespace-pre-wrap break-words">
+                                {typeof detailedErrorInfo.rawResponse === 'object' 
+                                  ? JSON.stringify(detailedErrorInfo.rawResponse, null, 2)
+                                  : detailedErrorInfo.rawResponse}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {detailedErrorInfo.errorMessage && (
+                          <div>
+                            <h3 className="text-sm font-semibold mb-1">Error Message from Python API</h3>
+                            <div className="bg-red-50 border border-red-200 p-2 rounded-md text-xs text-red-800">
+                              {detailedErrorInfo.errorMessage}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {detailedErrorInfo.logData && (
+                          <div>
+                            <h3 className="text-sm font-semibold mb-1">Complete Log Data</h3>
+                            <div className="bg-muted p-2 rounded-md overflow-auto max-h-40">
+                              <pre className="text-xs whitespace-pre-wrap break-words">
+                                {JSON.stringify(detailedErrorInfo.logData, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ScrapeForm from '@/components/events/ScrapeForm';
 import EventForm from '@/components/events/EventForm';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle } from 'lucide-react';
 
 interface ScrapeData {
   data: any;
@@ -32,22 +35,51 @@ const Submit = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-2">
-          <ScrapeForm onScrapedData={handleScrapedData} />
-        </div>
+      <Tabs defaultValue="scrape" className="mb-8">
+        <TabsList>
+          <TabsTrigger value="scrape">Scrape from URL</TabsTrigger>
+          <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="scrape" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-2">
+              <ScrapeForm onScrapedData={handleScrapedData} />
+            </div>
 
-        <div className="lg:col-span-3">
-          {user && (
-            <EventForm 
-              userId={user.id}
-              isCurator={isCurator}
-              isAdmin={isAdmin}
-              scrapeData={scrapeData}
-            />
-          )}
-        </div>
-      </div>
+            <div className="lg:col-span-3">
+              {user && (
+                <EventForm 
+                  userId={user.id}
+                  isCurator={isCurator}
+                  isAdmin={isAdmin}
+                  scrapeData={scrapeData}
+                />
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="manual" className="mt-4">
+          <div className="max-w-3xl mx-auto">
+            {user ? (
+              <EventForm 
+                userId={user.id}
+                isCurator={isCurator}
+                isAdmin={isAdmin}
+              />
+            ) : (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Authentication Required</AlertTitle>
+                <AlertDescription>
+                  You must be signed in to submit events.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
