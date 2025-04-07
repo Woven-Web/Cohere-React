@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 
-const BOULDER_COORDINATES = [-105.2705, 40.0150];
+const BOULDER_COORDINATES: [number, number] = [-105.2705, 40.0150];
 
 interface EventWithCoordinates extends Happening {
   coordinates?: [number, number];
