@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,8 +11,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EventFormData {
   title: string;
@@ -68,12 +67,20 @@ const Submit = () => {
 
   const handleScrape = async () => {
     if (!urlToScrape) {
-      toast.error('Please enter a URL to scrape');
+      toast({
+        title: 'Error',
+        description: 'Please enter a URL to scrape',
+        variant: 'destructive'
+      });
       return;
     }
 
     if (!urlToScrape.startsWith('http')) {
-      toast.error('Please enter a valid URL starting with http:// or https://');
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid URL starting with http:// or https://',
+        variant: 'destructive'
+      });
       return;
     }
 
@@ -81,11 +88,17 @@ const Submit = () => {
     setScrapeError(null);
 
     try {
-      const response = await fetch('/api/functions/v1/scrapeUrl', {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be signed in to scrape URLs');
+      }
+      
+      const response = await fetch('https://zdngnhaxibiplkdyfoiy.supabase.co/functions/v1/scrapeUrl', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ url: urlToScrape })
       });
@@ -102,15 +115,21 @@ const Submit = () => {
 
       if (result.data) {
         populateFormWithScrapeData(result.data, urlToScrape);
-        toast.success('Successfully scraped event details!');
+        toast({
+          title: 'Success',
+          description: 'Successfully scraped event details!',
+          variant: 'default'
+        });
       } else {
         throw new Error('No event data found');
       }
     } catch (error: any) {
       console.error('Scrape error:', error);
       setScrapeError(error.message || 'Failed to scrape event details');
-      toast.error('Failed to scrape event details', {
-        description: error.message
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to scrape event details',
+        variant: 'destructive'
       });
     } finally {
       setScraping(false);
@@ -151,11 +170,16 @@ const Submit = () => {
         .eq('id', scrapeLogId);
 
       if (error) throw error;
-      toast.success('Thank you for reporting this issue');
+      toast({
+        title: 'Thank you',
+        description: 'Thank you for reporting this issue',
+      });
     } catch (error: any) {
       console.error('Error reporting bad scrape:', error);
-      toast.error('Failed to report issue', {
-        description: error.message
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to report issue',
+        variant: 'destructive'
       });
     }
   };
@@ -164,19 +188,26 @@ const Submit = () => {
     e.preventDefault();
     
     if (!user) {
-      toast.error('You must be signed in to submit events');
+      toast({
+        title: 'Error',
+        description: 'You must be signed in to submit events',
+        variant: 'destructive'
+      });
       return;
     }
     
     if (!formData.title || !formData.start_date || !formData.start_time) {
-      toast.error('Please fill in all required fields');
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // Prepare the event data
       const startDateTime = new Date(formData.start_date);
       const [startHours, startMinutes] = formData.start_time.split(':').map(Number);
       startDateTime.setHours(startHours, startMinutes);
@@ -205,15 +236,18 @@ const Submit = () => {
 
       if (error) throw error;
 
-      toast.success('Event submitted successfully!', {
-        description: 'Your event will be reviewed by a curator before it appears on the calendar.'
+      toast({
+        title: 'Success',
+        description: 'Your event has been submitted and will be reviewed by a curator.',
       });
       
       navigate('/');
     } catch (error: any) {
       console.error('Error submitting event:', error);
-      toast.error('Failed to submit event', {
-        description: error.message
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to submit event',
+        variant: 'destructive'
       });
     } finally {
       setSubmitting(false);
