@@ -28,3 +28,4 @@ enabled = true
 [functions]
 [functions.scrapeUrl]
 verify_jwt = true
+
