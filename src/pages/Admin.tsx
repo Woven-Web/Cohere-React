@@ -5,10 +5,11 @@ import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PendingEventsList from '@/components/events/PendingEventsList';
-import { ClipboardList, Settings, Users, Flag } from 'lucide-react';
+import { ClipboardList, Settings, Users, Flag, FileText } from 'lucide-react';
 import EventFlagsList from '@/components/admin/EventFlagsList';
 import UserManagement from '@/components/admin/UserManagement';
 import CustomInstructionsManager from '@/components/admin/CustomInstructionsManager';
+import ScrapeLogsList from '@/components/admin/ScrapeLogsList';
 
 const Admin = () => {
   const { user, isAdmin, isCurator, loading } = useAuth();
@@ -32,7 +33,7 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-1 md:grid-cols-4">
+        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-1 md:grid-cols-5">
           <TabsTrigger value="pending-events" className="flex items-center">
             <ClipboardList className="mr-2 h-4 w-4" />
             <span>Pending Events</span>
@@ -45,6 +46,11 @@ const Admin = () => {
           
           {isAdmin && (
             <>
+              <TabsTrigger value="scrape-logs" className="flex items-center">
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Scrape Logs</span>
+              </TabsTrigger>
+              
               <TabsTrigger value="users" className="flex items-center">
                 <Users className="mr-2 h-4 w-4" />
                 <span>User Management</span>
@@ -88,6 +94,20 @@ const Admin = () => {
 
         {isAdmin && (
           <>
+            <TabsContent value="scrape-logs">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Scrape Logs</CardTitle>
+                  <CardDescription>
+                    Review URL scraping history and analyze issues
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrapeLogsList />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="users">
               <Card>
                 <CardHeader>
