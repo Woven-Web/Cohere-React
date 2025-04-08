@@ -1,8 +1,9 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { addDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Happening } from '@/lib/supabase';
+import { useLocation } from 'react-router-dom';
 
 // Export the FiltersState type (renamed from EventFilters to avoid confusion)
 export interface FiltersState {
@@ -33,31 +34,48 @@ export const calculateDistance = (
 };
 
 export const useEventFilters = () => {
-  // Set default date range to today -> 1 week from now
-  const today = new Date();
-  const oneWeekFromNow = addDays(today, 7);
+  const location = useLocation();
+  const isMapView = location.pathname === '/map';
+  
+  // Initial state depends on the current view
+  const getInitialDateRange = (): DateRange | undefined => {
+    if (isMapView) {
+      // For map view, set default date range to today -> 1 week from now
+      const today = new Date();
+      const oneWeekFromNow = addDays(today, 7);
+      return {
+        from: today,
+        to: oneWeekFromNow
+      };
+    }
+    
+    // For other views, don't set a default date range
+    return undefined;
+  };
   
   const [filters, setFilters] = useState<FiltersState>({
-    dateRange: {
-      from: today,
-      to: oneWeekFromNow
-    },
+    dateRange: getInitialDateRange(),
     locationRadius: null,
     userLocation: null,
     searchQuery: ''
   });
 
+  // Update filters when route changes
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      dateRange: getInitialDateRange()
+    }));
+  }, [location.pathname]);
+
   const resetFilters = useCallback(() => {
     setFilters({
-      dateRange: {
-        from: today,
-        to: oneWeekFromNow
-      },
+      dateRange: getInitialDateRange(),
       locationRadius: null,
       userLocation: null,
       searchQuery: ''
     });
-  }, [today, oneWeekFromNow]);
+  }, [location.pathname]);
 
   const filterEvents = useCallback((events: Happening[], eventGeodata: Record<string, [number, number]> = {}) => {
     const { dateRange, locationRadius, userLocation, searchQuery } = filters;

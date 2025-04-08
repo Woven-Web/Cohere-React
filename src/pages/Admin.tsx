@@ -10,10 +10,12 @@ import EventFlagsList from '@/components/admin/EventFlagsList';
 import UserManagement from '@/components/admin/UserManagement';
 import CustomInstructionsManager from '@/components/admin/CustomInstructionsManager';
 import ScrapeLogsList from '@/components/admin/ScrapeLogsList';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 const Admin = () => {
   const { user, isAdmin, isCurator, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("pending-events");
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-[60vh]">Loading...</div>;
@@ -33,30 +35,30 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-1 md:grid-cols-5">
-          <TabsTrigger value="pending-events" className="flex items-center">
+        <TabsList className={`${isMobile ? 'flex flex-col items-stretch space-y-1' : 'grid grid-cols-1 md:grid-cols-5'} w-full`}>
+          <TabsTrigger value="pending-events" className="flex items-center justify-center md:justify-start">
             <ClipboardList className="mr-2 h-4 w-4" />
             <span>Pending Events</span>
           </TabsTrigger>
           
-          <TabsTrigger value="event-flags" className="flex items-center">
+          <TabsTrigger value="event-flags" className="flex items-center justify-center md:justify-start">
             <Flag className="mr-2 h-4 w-4" />
             <span>Event Flags</span>
           </TabsTrigger>
           
           {isAdmin && (
             <>
-              <TabsTrigger value="scrape-logs" className="flex items-center">
+              <TabsTrigger value="scrape-logs" className="flex items-center justify-center md:justify-start">
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Scrape Logs</span>
               </TabsTrigger>
               
-              <TabsTrigger value="users" className="flex items-center">
+              <TabsTrigger value="users" className="flex items-center justify-center md:justify-start">
                 <Users className="mr-2 h-4 w-4" />
                 <span>User Management</span>
               </TabsTrigger>
               
-              <TabsTrigger value="settings" className="flex items-center">
+              <TabsTrigger value="settings" className="flex items-center justify-center md:justify-start">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Custom Instructions</span>
               </TabsTrigger>

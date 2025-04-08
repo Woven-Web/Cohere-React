@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, ScrapeLog } from '@/lib/supabase-client';
@@ -23,7 +24,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ExtendedScrapeLog extends ScrapeLog {
-  user_profiles?: {
+  profiles?: {
     role?: string;
   } | null;
   custom_instructions?: {
@@ -41,7 +42,7 @@ const ScrapeLogsList = () => {
         .from('scrape_logs')
         .select(`
           *,
-          user_profiles:requested_by_user_id(role),
+          profiles:requested_by_user_id(role),
           custom_instructions:custom_instruction_id_used(url_pattern)
         `)
         .order('created_at', { ascending: false });

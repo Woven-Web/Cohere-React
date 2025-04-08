@@ -24,6 +24,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { UserProfile } from '@/lib/supabase';
 
+interface UserWithEmail extends UserProfile {
+  email?: string;
+}
+
 const UserManagement = () => {
   const queryClient = useQueryClient();
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, string>>({});
@@ -32,13 +36,38 @@ const UserManagement = () => {
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['userProfiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get the user profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*')
         .order('updated_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (profilesError) throw profilesError;
+      
+      // Then get the user emails from auth.users
+      const userIds = profiles.map(profile => profile.id);
+      const usersWithEmails: UserWithEmail[] = [...profiles];
+      
+      // We need to use the service role to access auth.users
+      // This query will only work if the user has admin privileges
+      try {
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (!authError && authUsers) {
+          // Map emails to user profiles
+          authUsers.users.forEach(authUser => {
+            const profileIndex = usersWithEmails.findIndex(p => p.id === authUser.id);
+            if (profileIndex >= 0) {
+              usersWithEmails[profileIndex].email = authUser.email;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user emails:', error);
+        // Don't throw here, as we still want to show the profiles without emails
+      }
+      
+      return usersWithEmails;
     }
   });
 
@@ -108,16 +137,25 @@ const UserManagement = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User ID</TableHead>
+            <TableHead>User</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users && users.map((user: UserProfile) => (
+          {users && users.map((user: UserWithEmail) => (
             <TableRow key={user.id}>
-              <TableCell className="font-mono text-xs">{user.id}</TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  {user.email ? (
+                    <span className="font-medium">{user.email}</span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Email not available</span>
+                  )}
+                  <span className="text-xs text-muted-foreground font-mono truncate">{user.id}</span>
+                </div>
+              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Badge 
