@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,9 +24,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { UserProfile } from '@/lib/supabase';
 
-interface UserWithEmail extends UserProfile {
-  email?: string;
-}
+// Create a type that extends UserProfile but ensures email is optional
+// This avoids the TypeScript error about email being required in UserProfile but optional here
+type UserWithEmail = Omit<UserProfile, 'email'> & {
+  email?: string | null;
+};
 
 const UserManagement = () => {
   const queryClient = useQueryClient();
