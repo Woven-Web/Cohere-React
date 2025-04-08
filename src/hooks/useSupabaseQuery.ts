@@ -2,27 +2,37 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { typedDataResponse } from '@/lib/supabase-helpers';
+import { PostgrestError } from '@supabase/supabase-js';
+
+// Valid table names for type safety
+type TableNames = 'custom_instructions' | 'event_flags' | 'happenings' | 'scrape_logs' | 'user_attendance' | 'user_profiles';
+
+type FilterOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
+
+interface QueryFilter {
+  column: string;
+  value: any;
+  operator?: FilterOperator;
+}
+
+interface QueryOptions {
+  select?: string;
+  filters?: QueryFilter[];
+  order?: { column: string; ascending?: boolean };
+  limit?: number;
+  single?: boolean;
+  enabled?: boolean;
+}
 
 /**
  * A hook for performing Supabase queries with proper typing
- * 
- * @param tableName The table to query
- * @param options Query options
- * @returns Query result object with loading state, data, and error
  */
 export function useSupabaseQuery<T>(
-  tableName: string,
-  options: {
-    select?: string;
-    filters?: { column: string; value: any; operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' }[];
-    order?: { column: string; ascending?: boolean };
-    limit?: number;
-    single?: boolean;
-    enabled?: boolean;
-  } = {}
+  tableName: TableNames,
+  options: QueryOptions = {}
 ) {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<PostgrestError | Error | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const { select = '*', filters = [], order, limit, single = false, enabled = true } = options;
@@ -33,6 +43,7 @@ export function useSupabaseQuery<T>(
     async function fetchData() {
       try {
         setLoading(true);
+        // Use 'as any' to bypass the type checking since we're validating the table name with TableNames type
         let query = supabase.from(tableName).select(select);
 
         // Apply filters

@@ -1,6 +1,8 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase, UserProfile } from '@/lib/supabase-client';
 import { typedDataResponse } from '@/lib/supabase-helpers';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: any;
@@ -8,8 +10,12 @@ interface AuthContextType {
   isSubmitter: boolean;
   isCurator: boolean;
   isAdmin: boolean;
+  loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +26,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
   const [isSubmitter, setIsSubmitter] = useState(false);
   const [isCurator, setIsCurator] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -33,6 +40,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
           setIsCurator(false);
           setIsAdmin(false);
         }
+        setLoading(false);
       }
     );
 
@@ -42,6 +50,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
       if (session?.user) {
         fetchUserProfile(session.user.id);
       }
+      setLoading(false);
     });
 
     return () => {
@@ -55,7 +64,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', userId as any)
+        .eq('id', userId)
         .single();
       
       if (error) {
@@ -94,14 +103,48 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
     setIsAdmin(false);
   };
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } catch (error) {
+      console.error('Error signing in:', error);
+      return { error: error as Error };
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      return { error };
+    } catch (error) {
+      console.error('Error signing up:', error);
+      return { error: error as Error };
+    }
+  };
+
+  const signOut = async () => {
+    await logout();
+  };
+
   const value: AuthContextType = {
     user,
     userProfile,
     isSubmitter,
     isCurator,
     isAdmin,
+    loading,
     login,
     logout,
+    signIn,
+    signUp,
+    signOut,
   };
   
   return (
