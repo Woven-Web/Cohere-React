@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, Happening } from '@/lib/supabase-client';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, EyeIcon, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Happening } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   AlertDialog, 
@@ -34,11 +33,11 @@ const PendingEventsList = () => {
       const { data, error } = await supabase
         .from('happenings')
         .select('*')
-        .eq('status', 'pending')
+        .eq('status', 'pending' as any)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Happening[];
     }
   });
 
@@ -47,8 +46,8 @@ const PendingEventsList = () => {
     mutationFn: async ({ id, status }: { id: string, status: 'approved' | 'rejected' }) => {
       const { error } = await supabase
         .from('happenings')
-        .update({ status })
-        .eq('id', id);
+        .update({ status } as any)
+        .eq('id', id as any);
       
       if (error) throw error;
       return { id, status };
@@ -76,7 +75,7 @@ const PendingEventsList = () => {
       const { error, data } = await supabase
         .from('happenings')
         .delete()
-        .eq('id', id);
+        .eq('id', id as any);
       
       console.log('Delete response:', { error, data });
       
@@ -158,7 +157,7 @@ const PendingEventsList = () => {
 
   return (
     <div className="space-y-4">
-      {pendingEvents.map((event: Happening) => (
+      {pendingEvents.map((event) => (
         <Card key={event.id} className="border-l-4 border-l-yellow-500">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">

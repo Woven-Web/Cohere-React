@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +76,6 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       }
 
       if (data.data) {
-        // Check if event is in the past
         if (data.data.start_datetime) {
           const eventDate = new Date(data.data.start_datetime);
           const now = new Date();
@@ -95,7 +93,6 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       } else if (data.error) {
         setScrapeError(data.details || data.error);
         
-        // Store the full error information for admin detailed view
         if (isAdmin) {
           setDetailedErrorInfo({
             error: data.error,
@@ -114,7 +111,6 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       console.error('Scrape error:', error);
       setScrapeError(error.message || 'Failed to scrape event details');
       
-      // Fetch additional error details for admin if we have a log ID
       if (isAdmin && scrapeLogId) {
         fetchScrapeLogDetails(scrapeLogId);
       }
@@ -132,8 +128,8 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       const { data, error } = await supabase
         .from('scrape_logs')
         .select('*')
-        .eq('id', logId)
-        .single();
+        .eq('id', logId as any)
+        .maybeSingle();
         
       if (error) throw error;
       
@@ -160,8 +156,8 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       
       const { error } = await supabase
         .from('scrape_logs')
-        .update({ is_reported_bad: true })
-        .eq('id', scrapeLogId);
+        .update({ is_reported_bad: true } as any)
+        .eq('id', scrapeLogId as any);
 
       if (error) throw error;
       

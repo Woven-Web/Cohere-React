@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, UserPlus, Clock } from 'lucide-react';
@@ -16,9 +15,11 @@ interface AttendButtonProps {
   eventId: string;
 }
 
+type AttendanceStatus = 'going' | 'maybe_going' | null;
+
 export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
   const { user } = useAuth();
-  const [status, setStatus] = useState<'going' | 'maybe_going' | null>(null);
+  const [status, setStatus] = useState<AttendanceStatus>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,15 +37,13 @@ export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
         .select('status')
         .eq('user_id', user.id)
         .eq('happening_id', eventId)
-        .single();
+        .maybeSingle();
       
       if (error) {
-        if (error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
-          console.error('Error fetching attendance status:', error);
-        }
+        console.error('Error fetching attendance status:', error);
         setStatus(null);
       } else if (data) {
-        setStatus(data.status as 'going' | 'maybe_going');
+        setStatus(data.status as AttendanceStatus);
       }
     } catch (error) {
       console.error('Error in fetchAttendanceStatus:', error);
@@ -60,24 +59,25 @@ export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
     setLoading(true);
     
     try {
-      // If user already has a status, update it
       if (status) {
         const { error } = await supabase
           .from('user_attendance')
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString() 
+          })
           .eq('user_id', user.id)
           .eq('happening_id', eventId);
         
         if (error) throw error;
       } else {
-        // Otherwise insert a new record
         const { error } = await supabase
           .from('user_attendance')
           .insert({
             user_id: user.id,
             happening_id: eventId,
             status: newStatus,
-          });
+          } as any);
         
         if (error) throw error;
       }

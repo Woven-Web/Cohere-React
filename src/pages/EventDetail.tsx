@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase, Happening } from '@/lib/supabase';
+import { fetchHappeningById } from '@/lib/happenings-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { AttendButton } from '@/components/events/AttendButton';
 import FlagEventButton from '@/components/events/FlagEventButton';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -42,14 +42,13 @@ const EventDetail = () => {
   const fetchEvent = async (eventId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('happenings')
-        .select('*')
-        .eq('id', eventId)
-        .single();
-
-      if (error) throw error;
-      setEvent(data);
+      const eventData = await fetchHappeningById(eventId);
+      
+      if (!eventData) {
+        throw new Error('Event not found');
+      }
+      
+      setEvent(eventData);
     } catch (error: any) {
       console.error('Error fetching event:', error);
       setError(error.message);
@@ -74,7 +73,7 @@ const EventDetail = () => {
       const { error, data } = await supabase
         .from('happenings')
         .delete()
-        .eq('id', id);
+        .eq('id', id as any);
       
       console.log('Delete response:', { error, data });
       
@@ -194,6 +193,7 @@ const EventDetail = () => {
                         onClick={handleDeleteEvent}
                         className="bg-red-600 hover:bg-red-700"
                       >
+                        {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
                         {deleting ? 'Deleting...' : 'Delete'}
                       </AlertDialogAction>
                     </AlertDialogFooter>

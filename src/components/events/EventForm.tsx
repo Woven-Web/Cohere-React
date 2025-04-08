@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,12 +62,10 @@ const EventForm: React.FC<EventFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [isPastEvent, setIsPastEvent] = useState(false);
 
-  // Check if date is in the past when dates change
   useEffect(() => {
     checkIfPastEvent();
   }, [formData.start_date, formData.start_time]);
 
-  // Update form data when scrape data changes
   useEffect(() => {
     if (scrapeData?.data) {
       populateFormWithScrapeData(
@@ -116,7 +113,6 @@ const EventForm: React.FC<EventFormProps> = ({
         updates.start_date = startDate;
         updates.start_time = format(startDate, 'HH:mm');
         
-        // Check if the event is in the past after populating the form
         const now = new Date();
         if (startDate < now) {
           setIsPastEvent(true);
@@ -168,16 +164,16 @@ const EventForm: React.FC<EventFormProps> = ({
 
       const status = isCurator || isAdmin ? 'approved' : 'pending';
       
-      const eventData = {
+      const eventData: any = {
         title: formData.title,
         description: formData.description,
         start_datetime: startDateTime.toISOString(),
         end_datetime: endDateTime ? endDateTime.toISOString() : null,
-        location: formData.location,
-        source_url: formData.source_url,
+        location: formData.location || null,
+        source_url: formData.source_url || null,
         submitter_user_id: userId,
         scrape_log_id: formData.scrape_log_id,
-        status: status
+        status
       };
 
       const { error } = await supabase

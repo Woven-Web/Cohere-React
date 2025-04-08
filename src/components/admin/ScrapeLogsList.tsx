@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { ScrapeLog } from '@/lib/supabase-client';
+import { supabase, ScrapeLog } from '@/lib/supabase-client';
 import { formatDistanceToNow } from 'date-fns';
 import { Check, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -23,22 +21,14 @@ import {
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-// Define specific joined types to handle potential errors
-interface UserProfileResult {
-  role?: string;
-  error?: boolean;
+interface ExtendedScrapeLog extends ScrapeLog {
+  user_profiles?: {
+    role?: string;
+  } | null;
+  custom_instructions?: {
+    url_pattern?: string;
+  } | null;
 }
-
-interface CustomInstructionResult {
-  url_pattern?: string;
-  error?: boolean;
-}
-
-// Define the extended type with proper nullable/optional fields
-type ExtendedScrapeLog = ScrapeLog & {
-  user_profiles?: UserProfileResult | null;
-  custom_instructions?: CustomInstructionResult | null;
-};
 
 const ScrapeLogsList = () => {
   const [selectedLog, setSelectedLog] = useState<ExtendedScrapeLog | null>(null);
@@ -57,17 +47,7 @@ const ScrapeLogsList = () => {
 
       if (error) throw error;
       
-      // Convert the data to our expected type with proper handling for potential errors
-      const typedData = (data || []).map(item => {
-        // Ensure we have a properly shaped object even if the joins returned errors
-        return {
-          ...item,
-          user_profiles: typeof item.user_profiles === 'object' ? item.user_profiles : null,
-          custom_instructions: typeof item.custom_instructions === 'object' ? item.custom_instructions : null
-        } as ExtendedScrapeLog;
-      });
-      
-      return typedData;
+      return (data || []) as ExtendedScrapeLog[];
     },
   });
 
