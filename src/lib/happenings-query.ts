@@ -1,5 +1,6 @@
 
 import { supabase, Happening } from '@/lib/supabase-client';
+import { safeStatus, handleDbResponse } from '@/lib/supabase-helpers';
 
 /**
  * Safely query happenings with proper type handling
@@ -21,7 +22,7 @@ export async function fetchHappenings(options: {
     
     // Apply filters
     if (options.status) {
-      query = query.eq('status', options.status as any);
+      query = query.eq('status', safeStatus(options.status));
     }
     
     if (options.startDate) {
@@ -33,7 +34,7 @@ export async function fetchHappenings(options: {
     }
     
     if (options.userId) {
-      query = query.eq('submitter_user_id', options.userId as any);
+      query = query.eq('submitter_user_id', options.userId);
     }
     
     if (options.query) {
@@ -50,14 +51,9 @@ export async function fetchHappenings(options: {
       query = query.limit(options.limit);
     }
     
-    const { data, error } = await query;
+    const response = await query;
     
-    if (error) {
-      console.error('Error fetching happenings:', error);
-      return [];
-    }
-    
-    return data as Happening[];
+    return handleDbResponse<Happening[]>('fetchHappenings', response, []);
   } catch (error) {
     console.error('Error in fetchHappenings:', error);
     return [];
@@ -69,18 +65,18 @@ export async function fetchHappenings(options: {
  */
 export async function fetchHappeningById(id: string): Promise<Happening | null> {
   try {
-    const { data, error } = await supabase
+    const response = await supabase
       .from('happenings')
       .select('*')
-      .eq('id', id as any)
+      .eq('id', id)
       .maybeSingle();
     
-    if (error) {
-      console.error('Error fetching happening by ID:', error);
+    if (response.error) {
+      console.error('Error fetching happening by ID:', response.error);
       return null;
     }
     
-    return data as Happening;
+    return response.data;
   } catch (error) {
     console.error('Error in fetchHappeningById:', error);
     return null;

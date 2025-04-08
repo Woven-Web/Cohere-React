@@ -2,7 +2,8 @@
 /**
  * Helper functions to safely work with Supabase
  */
-import { PostgrestError } from '@supabase/supabase-js';
+import { PostgrestError, PostgrestSingleResponse } from '@supabase/supabase-js';
+import { Tables } from './supabase-client';
 
 /**
  * Type-guard to check if a response is an error
@@ -36,4 +37,60 @@ export function handleDbResponse<T>(
  */
 export function asDbType<T>(data: any): T {
   return data as T;
+}
+
+/**
+ * Helper function to safely convert string IDs for database queries
+ * This helps prevent TypeScript errors when using string IDs with Supabase
+ */
+export function safeId(id: string): unknown {
+  return id as unknown;
+}
+
+/**
+ * Helper function to safely convert string enum values for database queries
+ */
+export function safeEnumValue<T extends string>(value: T): unknown {
+  return value as unknown;
+}
+
+/**
+ * Helper to convert query parameter string to database enum
+ */
+export function safeStatus(status: 'pending' | 'approved' | 'rejected'): unknown {
+  return status as unknown;
+}
+
+/**
+ * Helper to safely handle single responses
+ */
+export function handleSingleResponse<T extends object>(
+  response: PostgrestSingleResponse<T>,
+  defaultValue: T | null = null
+): T | null {
+  if (response.error) {
+    console.error('Database query error:', response.error);
+    return defaultValue;
+  }
+  return response.data;
+}
+
+/**
+ * Helper for creating type-safe insert data
+ */
+export function createInsertData<T extends keyof Tables>(
+  table: T,
+  data: Tables[T]['Insert']
+): Tables[T]['Insert'] {
+  return data;
+}
+
+/**
+ * Helper for creating type-safe update data
+ */
+export function createUpdateData<T extends keyof Tables>(
+  table: T,
+  data: Tables[T]['Update']
+): Tables[T]['Update'] {
+  return data;
 }

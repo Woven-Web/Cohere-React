@@ -7,15 +7,9 @@ const SUPABASE_URL = "https://zdngnhaxibiplkdyfoiy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbmduaGF4aWJpcGxrZHlmb2l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMzc2MTksImV4cCI6MjA1OTYxMzYxOX0.Ei5H9FieonbikNYIs3QT91vhF5B5ABt0FQiNGXCg89o";
 
 // Define correct client options type
-const clientOptions: SupabaseClientOptions<"public"> = {
+const clientOptions: SupabaseClientOptions<Database["public"]> = {
   auth: {
     persistSession: true,
-  },
-  global: {
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
   }
 };
 
@@ -33,3 +27,15 @@ export type ScrapeLog = Tables['scrape_logs']['Row'];
 export type CustomInstruction = Tables['custom_instructions']['Row'];
 export type UserAttendance = Tables['user_attendance']['Row'];
 export type EventFlag = Tables['event_flags']['Row'];
+
+// Type for table insert operations
+export type HappeningInsert = Tables['happenings']['Insert'];
+export type UserAttendanceInsert = Tables['user_attendance']['Insert'];
+export type ScrapeLogInsert = Tables['scrape_logs']['Insert'];
+export type EventFlagInsert = Tables['event_flags']['Insert'];
+
+// Type for table update operations
+export type HappeningUpdate = Tables['happenings']['Update'];
+export type UserAttendanceUpdate = Tables['user_attendance']['Update'];
+export type ScrapeLogUpdate = Tables['scrape_logs']['Update'];
+export type EventFlagUpdate = Tables['event_flags']['Update'];
