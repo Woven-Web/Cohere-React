@@ -43,52 +43,57 @@ export function useSupabaseQuery<T>(
     async function fetchData() {
       try {
         setLoading(true);
-        // Use 'as any' to bypass the type checking since we're validating the table name with TableNames type
-        let query = supabase.from(tableName).select(select);
+        
+        // Cast tableName as any to avoid TypeScript complexity
+        const query = supabase.from(tableName as any).select(select);
 
         // Apply filters
         filters.forEach(filter => {
           const { column, value, operator = 'eq' } = filter;
+          
+          // Cast query as any to avoid excessive type depth
+          let nextQuery = query as any;
+          
           switch (operator) {
             case 'eq':
-              query = query.eq(column, value);
+              nextQuery = nextQuery.eq(column, value);
               break;
             case 'neq':
-              query = query.neq(column, value);
+              nextQuery = nextQuery.neq(column, value);
               break;
             case 'gt':
-              query = query.gt(column, value);
+              nextQuery = nextQuery.gt(column, value);
               break;
             case 'gte':
-              query = query.gte(column, value);
+              nextQuery = nextQuery.gte(column, value);
               break;
             case 'lt':
-              query = query.lt(column, value);
+              nextQuery = nextQuery.lt(column, value);
               break;
             case 'lte':
-              query = query.lte(column, value);
+              nextQuery = nextQuery.lte(column, value);
               break;
             case 'like':
-              query = query.like(column, value);
+              nextQuery = nextQuery.like(column, value);
               break;
             case 'ilike':
-              query = query.ilike(column, value);
+              nextQuery = nextQuery.ilike(column, value);
               break;
           }
         });
 
         // Apply ordering
         if (order) {
-          query = query.order(order.column, { ascending: order.ascending ?? true });
+          (query as any).order(order.column, { ascending: order.ascending ?? true });
         }
 
         // Apply limit
         if (limit) {
-          query = query.limit(limit);
+          (query as any).limit(limit);
         }
 
         // Get single result or multiple
-        const response = single ? await query.single() : await query;
+        const response = single ? await (query as any).single() : await query;
 
         if (response.error) throw response.error;
 
