@@ -168,7 +168,15 @@ export type Database = {
           requested_by_user_id?: string
           url_scraped?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scrape_logs_requested_by_user_id_fkey"
+            columns: ["requested_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_attendance: {
         Row: {

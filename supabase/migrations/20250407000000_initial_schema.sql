@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS public.user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'basic' CHECK (role IN ('basic', 'submitter', 'curator', 'admin')),
+  email TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -101,6 +102,10 @@ ALTER TABLE IF EXISTS public.happenings
 ALTER TABLE IF EXISTS public.scrape_logs
   ADD CONSTRAINT scrape_logs_custom_instruction_id_used_fkey
   FOREIGN KEY (custom_instruction_id_used) REFERENCES public.custom_instructions(id) ON DELETE SET NULL;
+
+ALTER TABLE IF EXISTS public.scrape_logs
+  ADD CONSTRAINT scrape_logs_requested_by_user_id_fkey
+  FOREIGN KEY (requested_by_user_id) REFERENCES public.user_profiles(id);
 
 ALTER TABLE IF EXISTS public.user_attendance
   ADD CONSTRAINT user_attendance_user_id_fkey

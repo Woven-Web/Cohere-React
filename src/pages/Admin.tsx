@@ -28,15 +28,15 @@ const Admin = () => {
   return (
     <div className="container px-4 py-6 sm:px-6 max-w-5xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Administration</h1>
+        <h1 className="text-3xl font-bold mb-2">Curation</h1>
         <p className="text-muted-foreground">
           {isAdmin ? 'Manage all aspects of the platform' : 'Review and approve community events'}
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <TabsList className={`flex ${isMobile ? 'flex-wrap gap-1 justify-center' : ''} min-w-full sm:inline-flex w-auto p-1`}>
+        <div className="overflow-x-auto">
+          <TabsList className="flex flex-wrap gap-2 p-1 justify-start">
             <TabsTrigger value="pending-events" className="flex items-center">
               <ClipboardList className="mr-2 h-4 w-4" />
               <span>Pending Events</span>

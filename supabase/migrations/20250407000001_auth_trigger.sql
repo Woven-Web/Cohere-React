@@ -9,8 +9,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  INSERT INTO public.user_profiles (id, role)
-  VALUES (NEW.id, 'basic');
+  INSERT INTO public.user_profiles (id, role, email)
+  VALUES (NEW.id, 'basic', NEW.email);
   RETURN NEW;
 END;
 $$;

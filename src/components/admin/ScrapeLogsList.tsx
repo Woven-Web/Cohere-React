@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 interface ExtendedScrapeLog extends ScrapeLog {
   user_profiles?: {
-    email?: string;
+    email?: string | null;
     role?: string;
   };
   custom_instructions?: {
@@ -41,8 +41,8 @@ const ScrapeLogsList = () => {
         .from('scrape_logs')
         .select(`
           *,
-          user_profiles:requested_by_user_id(email, role),
-          custom_instructions:custom_instruction_id_used(url_pattern)
+          user_profiles(email, role),
+          custom_instructions(url_pattern)
         `)
         .order('created_at', { ascending: false });
 
