@@ -1,5 +1,5 @@
 
-project_id = "whatever-value-is-here-already"
+project_id = "zdngnhaxibiplkdyfoiy"
 
 [api]
 enabled = true
@@ -28,4 +28,3 @@ enabled = true
 [functions]
 [functions.scrapeUrl]
 verify_jwt = true
-

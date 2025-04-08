@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, EyeIcon, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,19 +71,25 @@ const PendingEventsList = () => {
   // Mutation for deleting events
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      console.log('Attempting to delete pending event with ID:', id);
+      
+      const { error, data } = await supabase
         .from('happenings')
         .delete()
         .eq('id', id);
       
+      console.log('Delete response:', { error, data });
+      
       if (error) throw error;
       return id;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
+      console.log('Successfully deleted event:', id);
       queryClient.invalidateQueries({ queryKey: ['pendingEvents'] });
       toast.success('Event deleted successfully');
     },
     onError: (error: any) => {
+      console.error('Failed to delete event:', error);
       toast.error('Failed to delete event', {
         description: error.message
       });
@@ -100,6 +105,7 @@ const PendingEventsList = () => {
   };
 
   const handleDelete = (id: string) => {
+    console.log('Delete button clicked for event:', id);
     deleteEventMutation.mutate(id);
     setEventToDelete(null);
   };
@@ -247,7 +253,7 @@ const PendingEventsList = () => {
                     onClick={() => handleDelete(event.id)}
                     className="bg-red-600 hover:bg-red-700"
                   >
-                    Delete
+                    {deleteEventMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

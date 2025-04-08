@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, Happening } from '@/lib/supabase';
@@ -70,12 +69,18 @@ const EventDetail = () => {
     
     setDeleting(true);
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete event with ID:', id);
+      
+      const { error, data } = await supabase
         .from('happenings')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      console.log('Delete response:', { error, data });
+      
+      if (error) {
+        throw error;
+      }
       
       toast.success('Event deleted successfully');
       navigate('/');
@@ -189,7 +194,7 @@ const EventDetail = () => {
                         onClick={handleDeleteEvent}
                         className="bg-red-600 hover:bg-red-700"
                       >
-                        Delete
+                        {deleting ? 'Deleting...' : 'Delete'}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
