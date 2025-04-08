@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, ScrapeLog } from '@/lib/supabase';
@@ -37,16 +38,50 @@ const ScrapeLogsList = () => {
   const { data: logs, isLoading, error } = useQuery({
     queryKey: ['scrape-logs'],
     queryFn: async () => {
+      // Query without joining custom_instructions to avoid the relationship error
       const { data, error } = await supabase
         .from('scrape_logs')
         .select(`
           *,
-          user_profiles(email, role),
-          custom_instructions(url_pattern)
+          user_profiles(email, role)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // If we have logs with custom_instruction_id_used, fetch the custom instructions separately
+      if (data && data.length > 0) {
+        const instructionIds = data
+          .filter(log => log.custom_instruction_id_used)
+          .map(log => log.custom_instruction_id_used);
+        
+        if (instructionIds.length > 0) {
+          const { data: instructions, error: instructionsError } = await supabase
+            .from('custom_instructions')
+            .select('id, url_pattern')
+            .in('id', instructionIds);
+          
+          if (!instructionsError && instructions) {
+            // Map the instructions to each log
+            return data.map(log => {
+              if (log.custom_instruction_id_used) {
+                const matchedInstruction = instructions.find(
+                  instruction => instruction.id === log.custom_instruction_id_used
+                );
+                if (matchedInstruction) {
+                  return {
+                    ...log,
+                    custom_instructions: {
+                      url_pattern: matchedInstruction.url_pattern
+                    }
+                  };
+                }
+              }
+              return log;
+            }) as ExtendedScrapeLog[];
+          }
+        }
+      }
       
       return data as ExtendedScrapeLog[];
     },

@@ -35,8 +35,8 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="overflow-x-auto">
-          <TabsList className="flex flex-wrap gap-2 p-1 justify-start">
+        <div className="border-b pb-2">
+          <TabsList className="inline-flex flex-wrap gap-2 p-1 justify-start">
             <TabsTrigger value="pending-events" className="flex items-center">
               <ClipboardList className="mr-2 h-4 w-4" />
               <span>Pending Events</span>

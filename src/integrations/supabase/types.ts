@@ -170,6 +170,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "scrape_logs_custom_instruction_id_used_fkey"
+            columns: ["custom_instruction_id_used"]
+            isOneToOne: false
+            referencedRelation: "custom_instructions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "scrape_logs_requested_by_user_id_fkey"
             columns: ["requested_by_user_id"]
             isOneToOne: false
