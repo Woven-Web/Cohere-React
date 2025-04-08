@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Loader2, Flag, Link2, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase, ScrapeLog } from '@/lib/supabase-client';
+import { typedDataResponse } from '@/lib/supabase-helpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -134,13 +135,14 @@ const ScrapeForm: React.FC<ScrapeFormProps> = ({ onScrapedData }) => {
       if (error) throw error;
       
       if (data) {
+        const typedData = typedDataResponse<ScrapeLog>(data);
         setDetailedErrorInfo({
           ...detailedErrorInfo,
-          rawResponse: data.raw_llm_response,
-          errorMessage: data.error_message,
-          usePlaywright: data.playwright_flag_used,
-          url: data.url_scraped,
-          logData: data
+          rawResponse: typedData.raw_llm_response,
+          errorMessage: typedData.error_message,
+          usePlaywright: typedData.playwright_flag_used,
+          url: typedData.url_scraped,
+          logData: typedData
         });
       }
     } catch (err) {

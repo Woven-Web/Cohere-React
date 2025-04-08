@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, UserPlus, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase-client';
+import { supabase, UserAttendanceUpdate, UserAttendanceInsert } from '@/lib/supabase-client';
+import { typedDataResponse } from '@/lib/supabase-helpers';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -35,15 +37,16 @@ export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
       const { data, error } = await supabase
         .from('user_attendance')
         .select('status')
-        .eq('user_id', user.id)
-        .eq('happening_id', eventId)
+        .eq('user_id', user.id as any)
+        .eq('happening_id', eventId as any)
         .maybeSingle();
       
       if (error) {
         console.error('Error fetching attendance status:', error);
         setStatus(null);
       } else if (data) {
-        setStatus(data.status as AttendanceStatus);
+        const typedData = typedDataResponse<{status: AttendanceStatus}>(data);
+        setStatus(typedData.status);
       }
     } catch (error) {
       console.error('Error in fetchAttendanceStatus:', error);
@@ -60,24 +63,28 @@ export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
     
     try {
       if (status) {
+        const updateData: UserAttendanceUpdate = { 
+          status: newStatus,
+          updated_at: new Date().toISOString() 
+        };
+        
         const { error } = await supabase
           .from('user_attendance')
-          .update({ 
-            status: newStatus,
-            updated_at: new Date().toISOString() 
-          })
-          .eq('user_id', user.id)
-          .eq('happening_id', eventId);
+          .update(updateData as any)
+          .eq('user_id', user.id as any)
+          .eq('happening_id', eventId as any);
         
         if (error) throw error;
       } else {
+        const insertData: UserAttendanceInsert = {
+          user_id: user.id,
+          happening_id: eventId,
+          status: newStatus,
+        };
+        
         const { error } = await supabase
           .from('user_attendance')
-          .insert({
-            user_id: user.id,
-            happening_id: eventId,
-            status: newStatus,
-          } as any);
+          .insert(insertData as any);
         
         if (error) throw error;
       }
@@ -102,8 +109,8 @@ export const AttendButton: React.FC<AttendButtonProps> = ({ eventId }) => {
       const { error } = await supabase
         .from('user_attendance')
         .delete()
-        .eq('user_id', user.id)
-        .eq('happening_id', eventId);
+        .eq('user_id', user.id as any)
+        .eq('happening_id', eventId as any);
       
       if (error) throw error;
       

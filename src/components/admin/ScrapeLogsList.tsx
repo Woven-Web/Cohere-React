@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, ScrapeLog } from '@/lib/supabase-client';
+import { typedDataResponse } from '@/lib/supabase-helpers';
 import { formatDistanceToNow } from 'date-fns';
 import { Check, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ExtendedScrapeLog extends ScrapeLog {
@@ -47,7 +48,7 @@ const ScrapeLogsList = () => {
 
       if (error) throw error;
       
-      return (data || []) as ExtendedScrapeLog[];
+      return typedDataResponse<ExtendedScrapeLog[]>(data || []);
     },
   });
 

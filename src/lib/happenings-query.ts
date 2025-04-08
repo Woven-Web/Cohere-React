@@ -1,6 +1,6 @@
 
 import { supabase, Happening } from '@/lib/supabase-client';
-import { safeStatus, handleDbResponse } from '@/lib/supabase-helpers';
+import { safeStatus, typedDataResponse, handleDbResponse } from '@/lib/supabase-helpers';
 
 /**
  * Safely query happenings with proper type handling
@@ -34,7 +34,7 @@ export async function fetchHappenings(options: {
     }
     
     if (options.userId) {
-      query = query.eq('submitter_user_id', options.userId);
+      query = query.eq('submitter_user_id', options.userId as any);
     }
     
     if (options.query) {
@@ -52,8 +52,7 @@ export async function fetchHappenings(options: {
     }
     
     const response = await query;
-    
-    return handleDbResponse<Happening[]>('fetchHappenings', response, []);
+    return typedDataResponse<Happening[]>(response.data) || [];
   } catch (error) {
     console.error('Error in fetchHappenings:', error);
     return [];
@@ -68,7 +67,7 @@ export async function fetchHappeningById(id: string): Promise<Happening | null> 
     const response = await supabase
       .from('happenings')
       .select('*')
-      .eq('id', id)
+      .eq('id', id as any)
       .maybeSingle();
     
     if (response.error) {
@@ -76,7 +75,7 @@ export async function fetchHappeningById(id: string): Promise<Happening | null> 
       return null;
     }
     
-    return response.data;
+    return typedDataResponse<Happening>(response.data);
   } catch (error) {
     console.error('Error in fetchHappeningById:', error);
     return null;

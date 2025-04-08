@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, Happening } from '@/lib/supabase-client';
+import { supabase, Happening, HappeningUpdate } from '@/lib/supabase-client';
+import { typedDataResponse } from '@/lib/supabase-helpers';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, EyeIcon, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,16 +38,18 @@ const PendingEventsList = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Happening[];
+      return typedDataResponse<Happening[]>(data || []);
     }
   });
 
   // Mutation for approving/rejecting events
   const updateEventStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: 'approved' | 'rejected' }) => {
+      const updateData: HappeningUpdate = { status };
+      
       const { error } = await supabase
         .from('happenings')
-        .update({ status } as any)
+        .update(updateData as any)
         .eq('id', id as any);
       
       if (error) throw error;

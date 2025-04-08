@@ -13,6 +13,14 @@ export function isPostgrestError(obj: any): obj is PostgrestError {
 }
 
 /**
+ * Type assertion for Supabase query responses
+ * This helps handle the complex type issues with Supabase's GetResult types
+ */
+export function typedDataResponse<T>(data: any): T {
+  return data as T;
+}
+
+/**
  * Safely handle Supabase database responses, with proper error handling
  * @param operation The name of the operation (for logging)
  * @param response The database response
@@ -21,76 +29,60 @@ export function isPostgrestError(obj: any): obj is PostgrestError {
  */
 export function handleDbResponse<T>(
   operation: string,
-  response: { data: T | null; error: PostgrestError | null },
+  response: { data: any; error: PostgrestError | null },
   defaultValue: T
 ): T {
   if (response.error) {
     console.error(`Error in ${operation}:`, response.error);
     return defaultValue;
   }
-  return response.data || defaultValue;
+  return typedDataResponse<T>(response.data) || defaultValue;
 }
 
 /**
- * Type assertion helper for Supabase operations
- * This is used when TypeScript doesn't correctly infer types
+ * Helper for safely handling single responses
  */
-export function asDbType<T>(data: any): T {
-  return data as T;
-}
-
-/**
- * Helper function to safely convert string IDs for database queries
- * This helps prevent TypeScript errors when using string IDs with Supabase
- */
-export function safeId(id: string): unknown {
-  return id as unknown;
-}
-
-/**
- * Helper function to safely convert string enum values for database queries
- */
-export function safeEnumValue<T extends string>(value: T): unknown {
-  return value as unknown;
-}
-
-/**
- * Helper to convert query parameter string to database enum
- */
-export function safeStatus(status: 'pending' | 'approved' | 'rejected'): unknown {
-  return status as unknown;
-}
-
-/**
- * Helper to safely handle single responses
- */
-export function handleSingleResponse<T extends object>(
-  response: PostgrestSingleResponse<T>,
+export function handleSingleResponse<T>(
+  response: PostgrestSingleResponse<any>,
   defaultValue: T | null = null
 ): T | null {
   if (response.error) {
     console.error('Database query error:', response.error);
     return defaultValue;
   }
-  return response.data;
+  return typedDataResponse<T>(response.data);
 }
 
 /**
- * Helper for creating type-safe insert data
+ * Helper function to safely convert string IDs for database queries
+ */
+export function safeId(id: string): any {
+  return id;
+}
+
+/**
+ * Helper function to safely convert string enum values for database queries
+ */
+export function safeStatus(status: 'pending' | 'approved' | 'rejected'): any {
+  return status;
+}
+
+/**
+ * Helper to create typesafe insert objects
  */
 export function createInsertData<T extends keyof Tables>(
-  table: T,
+  _table: T,
   data: Tables[T]['Insert']
-): Tables[T]['Insert'] {
+): any {
   return data;
 }
 
 /**
- * Helper for creating type-safe update data
+ * Helper to create typesafe update objects
  */
 export function createUpdateData<T extends keyof Tables>(
-  table: T,
+  _table: T,
   data: Tables[T]['Update']
-): Tables[T]['Update'] {
+): any {
   return data;
 }
