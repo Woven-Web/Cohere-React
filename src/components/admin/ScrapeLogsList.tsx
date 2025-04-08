@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, ScrapeLog } from '@/lib/supabase-client';
-import { typedDataResponse } from '@/lib/supabase-helpers';
+import { supabase, ScrapeLog } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { Check, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +22,13 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ExtendedScrapeLog extends ScrapeLog {
-  profiles?: {
+  user_profiles?: {
+    email?: string;
     role?: string;
-  } | null;
+  };
   custom_instructions?: {
     url_pattern?: string;
-  } | null;
+  };
 }
 
 const ScrapeLogsList = () => {
@@ -42,14 +41,14 @@ const ScrapeLogsList = () => {
         .from('scrape_logs')
         .select(`
           *,
-          profiles:requested_by_user_id(role),
+          user_profiles:requested_by_user_id(email, role),
           custom_instructions:custom_instruction_id_used(url_pattern)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      return typedDataResponse<ExtendedScrapeLog[]>(data || []);
+      return data as ExtendedScrapeLog[];
     },
   });
 
@@ -67,7 +66,7 @@ const ScrapeLogsList = () => {
   }
 
   return (
-    <div>
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
       <div className="rounded-md border mb-4">
         <Table>
           <TableHeader>
@@ -75,8 +74,8 @@ const ScrapeLogsList = () => {
               <TableHead>Date</TableHead>
               <TableHead>URL</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Instructions Used</TableHead>
-              <TableHead>Playwright</TableHead>
+              <TableHead className="hidden sm:table-cell">Instructions Used</TableHead>
+              <TableHead className="hidden sm:table-cell">Playwright</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -87,7 +86,7 @@ const ScrapeLogsList = () => {
                   <TableCell className="font-medium">
                     {log.created_at ? formatDistanceToNow(new Date(log.created_at), { addSuffix: true }) : 'Unknown'}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
+                  <TableCell className="max-w-[120px] sm:max-w-xs truncate">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -117,7 +116,7 @@ const ScrapeLogsList = () => {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {log.custom_instructions?.url_pattern ? (
                       <Badge variant="secondary" className="max-w-[150px] truncate">
                         {log.custom_instructions.url_pattern}
@@ -126,7 +125,7 @@ const ScrapeLogsList = () => {
                       <span className="text-muted-foreground text-xs">None</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {log.playwright_flag_used ? (
                       <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Yes</Badge>
                     ) : (
@@ -141,6 +140,7 @@ const ScrapeLogsList = () => {
                             variant="outline" 
                             size="sm" 
                             onClick={() => setSelectedLog(log)}
+                            className="hidden sm:flex"
                           >
                             View Details
                           </Button>
@@ -226,6 +226,85 @@ const ScrapeLogsList = () => {
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                       </a>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setSelectedLog(log)}
+                            className="sm:hidden"
+                          >
+                            Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Scrape Log Details</DialogTitle>
+                          </DialogHeader>
+                          {selectedLog && (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-medium">URL Scraped</h3>
+                                <a 
+                                  href={selectedLog.url_scraped} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                >
+                                  Open URL <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                              <div className="p-2 bg-muted rounded-md">
+                                <code className="break-all text-xs">{selectedLog.url_scraped}</code>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h3 className="text-sm font-medium mb-1">Created</h3>
+                                  <p className="text-sm">
+                                    {selectedLog.created_at ? new Date(selectedLog.created_at).toLocaleString() : 'Unknown'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h3 className="text-sm font-medium mb-1">Status</h3>
+                                  <p className="text-sm">
+                                    {selectedLog.error_message ? 'Failed' : 
+                                     selectedLog.is_reported_bad ? 'Reported as Bad' : 'Success'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {selectedLog.error_message && (
+                                <div>
+                                  <h3 className="text-sm font-medium mb-1">Error Message</h3>
+                                  <div className="p-2 bg-red-50 border border-red-200 rounded-md">
+                                    <p className="text-red-800 text-sm">{selectedLog.error_message}</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {selectedLog.raw_llm_response && (
+                                <div>
+                                  <h3 className="text-sm font-medium mb-1">Raw LLM Response</h3>
+                                  <div className="p-2 bg-muted rounded-md overflow-auto max-h-60">
+                                    <pre className="text-xs">{JSON.stringify(selectedLog.raw_llm_response, null, 2)}</pre>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {selectedLog.parsed_event_data && (
+                                <div>
+                                  <h3 className="text-sm font-medium mb-1">Parsed Event Data</h3>
+                                  <div className="p-2 bg-muted rounded-md overflow-auto max-h-60">
+                                    <pre className="text-xs">{JSON.stringify(selectedLog.parsed_event_data, null, 2)}</pre>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </TableCell>
                 </TableRow>

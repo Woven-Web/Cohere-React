@@ -26,7 +26,7 @@ const Admin = () => {
   }
 
   return (
-    <div>
+    <div className="container px-4 py-6 sm:px-6 max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Administration</h1>
         <p className="text-muted-foreground">
@@ -35,36 +35,38 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`${isMobile ? 'flex flex-col items-stretch space-y-1' : 'grid grid-cols-1 md:grid-cols-5'} w-full`}>
-          <TabsTrigger value="pending-events" className="flex items-center justify-center md:justify-start">
-            <ClipboardList className="mr-2 h-4 w-4" />
-            <span>Pending Events</span>
-          </TabsTrigger>
-          
-          <TabsTrigger value="event-flags" className="flex items-center justify-center md:justify-start">
-            <Flag className="mr-2 h-4 w-4" />
-            <span>Event Flags</span>
-          </TabsTrigger>
-          
-          {isAdmin && (
-            <>
-              <TabsTrigger value="scrape-logs" className="flex items-center justify-center md:justify-start">
-                <FileText className="mr-2 h-4 w-4" />
-                <span>Scrape Logs</span>
-              </TabsTrigger>
-              
-              <TabsTrigger value="users" className="flex items-center justify-center md:justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                <span>User Management</span>
-              </TabsTrigger>
-              
-              <TabsTrigger value="settings" className="flex items-center justify-center md:justify-start">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Custom Instructions</span>
-              </TabsTrigger>
-            </>
-          )}
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <TabsList className={`flex ${isMobile ? 'flex-wrap gap-1 justify-center' : ''} min-w-full sm:inline-flex w-auto p-1`}>
+            <TabsTrigger value="pending-events" className="flex items-center">
+              <ClipboardList className="mr-2 h-4 w-4" />
+              <span>Pending Events</span>
+            </TabsTrigger>
+            
+            <TabsTrigger value="event-flags" className="flex items-center">
+              <Flag className="mr-2 h-4 w-4" />
+              <span>Event Flags</span>
+            </TabsTrigger>
+            
+            {isAdmin && (
+              <>
+                <TabsTrigger value="scrape-logs" className="flex items-center">
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Scrape Logs</span>
+                </TabsTrigger>
+                
+                <TabsTrigger value="users" className="flex items-center">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>User Management</span>
+                </TabsTrigger>
+                
+                <TabsTrigger value="settings" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Custom Instructions</span>
+                </TabsTrigger>
+              </>
+            )}
+          </TabsList>
+        </div>
 
         <TabsContent value="pending-events">
           <Card>

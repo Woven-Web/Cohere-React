@@ -204,16 +204,19 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          email: string | null
           id: string
           role: string
           updated_at: string
         }
         Insert: {
+          email?: string | null
           id: string
           role?: string
           updated_at?: string
         }
         Update: {
+          email?: string | null
           id?: string
           role?: string
           updated_at?: string

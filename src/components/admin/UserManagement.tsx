@@ -23,11 +23,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { UserProfile } from '@/lib/supabase';
 
-interface AuthUser {
-  id: string;
-  email?: string;
-}
-
 interface UserWithEmail extends UserProfile {
   email?: string;
 }
@@ -46,25 +41,7 @@ const UserManagement = () => {
       
       if (profilesError) throw profilesError;
       
-      const usersWithEmails: UserWithEmail[] = [...profiles];
-      
-      try {
-        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (!authError && authData) {
-          const authUsers = authData.users as AuthUser[];
-          
-          authUsers.forEach(authUser => {
-            const profileIndex = usersWithEmails.findIndex(p => p.id === authUser.id);
-            if (profileIndex >= 0) {
-              usersWithEmails[profileIndex].email = authUser.email;
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user emails:', error);
-      }
-      
+      const usersWithEmails = profiles as UserWithEmail[];
       return usersWithEmails;
     }
   });
@@ -130,13 +107,13 @@ const UserManagement = () => {
   }
 
   return (
-    <div>
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Last Updated</TableHead>
+            <TableHead className="hidden sm:table-cell">Last Updated</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -150,11 +127,11 @@ const UserManagement = () => {
                   ) : (
                     <span className="text-muted-foreground text-sm">Email not available</span>
                   )}
-                  <span className="text-xs text-muted-foreground font-mono truncate">{user.id}</span>
+                  <span className="text-xs text-muted-foreground font-mono truncate max-w-[150px] sm:max-w-[200px]">{user.id}</span>
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <Badge 
                     variant={
                       user.role === 'admin' 
@@ -165,6 +142,7 @@ const UserManagement = () => {
                             ? 'secondary' 
                             : 'outline'
                     }
+                    className="inline-flex"
                   >
                     {user.role}
                   </Badge>
@@ -173,7 +151,7 @@ const UserManagement = () => {
                     value={pendingUpdates[user.id] || user.role}
                     onValueChange={(value) => handleRoleChange(user.id, value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue placeholder="Change role..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -185,7 +163,7 @@ const UserManagement = () => {
                   </Select>
                 </div>
               </TableCell>
-              <TableCell>{new Date(user.updated_at).toLocaleString()}</TableCell>
+              <TableCell className="hidden sm:table-cell">{new Date(user.updated_at).toLocaleString()}</TableCell>
               <TableCell>
                 {pendingUpdates[user.id] && (
                   <Button
@@ -193,6 +171,7 @@ const UserManagement = () => {
                     size="sm"
                     onClick={() => saveRoleChange(user.id)}
                     disabled={updateUserRoleMutation.isPending && updateUserRoleMutation.variables?.userId === user.id}
+                    className="w-full sm:w-auto"
                   >
                     {updateUserRoleMutation.isPending && updateUserRoleMutation.variables?.userId === user.id ? (
                       <Loader2 className="h-4 w-4 mr-1 animate-spin" />

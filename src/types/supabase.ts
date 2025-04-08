@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -187,16 +186,19 @@ export interface Database {
           id: string
           role: 'basic' | 'submitter' | 'curator' | 'admin'
           updated_at: string
+          email: string | null
         }
         Insert: {
           id: string
           role?: 'basic' | 'submitter' | 'curator' | 'admin'
           updated_at?: string
+          email?: string | null
         }
         Update: {
           id?: string
           role?: 'basic' | 'submitter' | 'curator' | 'admin'
           updated_at?: string
+          email?: string | null
         }
       }
     }
