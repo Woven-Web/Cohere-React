@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +23,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { UserProfile } from '@/lib/supabase';
 
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 interface UserWithEmail extends UserProfile {
   email?: string;
 }
@@ -32,11 +36,9 @@ const UserManagement = () => {
   const queryClient = useQueryClient();
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, string>>({});
 
-  // Query for users with their profiles
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['userProfiles'],
     queryFn: async () => {
-      // First get the user profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -44,18 +46,15 @@ const UserManagement = () => {
       
       if (profilesError) throw profilesError;
       
-      // Then get the user emails from auth.users
-      const userIds = profiles.map(profile => profile.id);
       const usersWithEmails: UserWithEmail[] = [...profiles];
       
-      // We need to use the service role to access auth.users
-      // This query will only work if the user has admin privileges
       try {
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         
-        if (!authError && authUsers) {
-          // Map emails to user profiles
-          authUsers.users.forEach(authUser => {
+        if (!authError && authData) {
+          const authUsers = authData.users as AuthUser[];
+          
+          authUsers.forEach(authUser => {
             const profileIndex = usersWithEmails.findIndex(p => p.id === authUser.id);
             if (profileIndex >= 0) {
               usersWithEmails[profileIndex].email = authUser.email;
@@ -64,14 +63,12 @@ const UserManagement = () => {
         }
       } catch (error) {
         console.error('Error fetching user emails:', error);
-        // Don't throw here, as we still want to show the profiles without emails
       }
       
       return usersWithEmails;
     }
   });
 
-  // Mutation for updating user roles
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string, role: string }) => {
       const { error } = await supabase
