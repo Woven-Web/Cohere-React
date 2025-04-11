@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, MapPin, X, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, X, Search, History } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
@@ -20,6 +22,7 @@ interface EventFiltersBarProps {
   showDateFilter?: boolean;
   showLocationFilter?: boolean;
   showSearchFilter?: boolean;
+  showPastEventsFilter?: boolean;
   inline?: boolean;
 }
 
@@ -31,12 +34,17 @@ const EventFiltersBar: React.FC<EventFiltersBarProps> = ({
   showDateFilter = true,
   showLocationFilter = true,
   showSearchFilter = true,
+  showPastEventsFilter = true,
   inline = false
 }) => {
-  const { dateRange, locationRadius, userLocation, searchQuery } = filters;
+  const { dateRange, locationRadius, userLocation, searchQuery, includePastEvents } = filters;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
+  };
+
+  const togglePastEvents = (checked: boolean) => {
+    setFilters(prev => ({ ...prev, includePastEvents: checked }));
   };
 
   const requestUserLocation = () => {
@@ -63,7 +71,7 @@ const EventFiltersBar: React.FC<EventFiltersBarProps> = ({
     setFilters(prev => ({ ...prev, userLocation: null, locationRadius: null }));
   };
 
-  const hasActiveFilters = !!dateRange || !!userLocation || !!searchQuery;
+  const hasActiveFilters = !!dateRange || !!userLocation || !!searchQuery || includePastEvents;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -157,6 +165,20 @@ const EventFiltersBar: React.FC<EventFiltersBarProps> = ({
         )}
       </div>
 
+      {showPastEventsFilter && (
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id="past-events"
+            checked={includePastEvents}
+            onCheckedChange={togglePastEvents}
+          />
+          <Label htmlFor="past-events" className="text-sm font-medium">
+            <History className="h-4 w-4 inline mr-1" />
+            Include past events
+          </Label>
+        </div>
+      )}
+
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex flex-wrap gap-2">
@@ -178,6 +200,13 @@ const EventFiltersBar: React.FC<EventFiltersBarProps> = ({
             {searchQuery && (
               <Badge variant="outline">
                 Search: "{searchQuery}"
+              </Badge>
+            )}
+
+            {includePastEvents && (
+              <Badge variant="outline">
+                <History className="h-3 w-3 mr-1" />
+                Including past events
               </Badge>
             )}
           </div>

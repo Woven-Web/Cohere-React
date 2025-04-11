@@ -16,7 +16,7 @@ const EventList = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [filters.includePastEvents]); // Refetch when includePastEvents changes
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -28,8 +28,18 @@ const EventList = () => {
         .order('start_datetime', { ascending: true });
 
       if (error) throw error;
-      setEvents(data || []);
-      processEventLocations(data || []);
+      
+      // Apply default filter for past events if not explicitly included
+      let processedEvents = data || [];
+      if (!filters.includePastEvents) {
+        const now = new Date();
+        processedEvents = processedEvents.filter(event => 
+          new Date(event.start_datetime) >= now
+        );
+      }
+      
+      setEvents(processedEvents);
+      processEventLocations(processedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -101,6 +111,7 @@ const EventList = () => {
           setFilters={setFilters}
           onReset={resetFilters}
           inline={true}
+          showPastEventsFilter={true}
         />
       </div>
 

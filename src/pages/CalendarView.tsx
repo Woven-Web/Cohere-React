@@ -20,7 +20,7 @@ const CalendarView = () => {
 
   useEffect(() => {
     fetchEventsForMonth();
-  }, [currentDate]);
+  }, [currentDate, filters.includePastEvents]); // Re-fetch when month or includePastEvents changes
   
   // Process event locations for distance filtering
   const processEventLocations = async (events: Happening[]) => {
@@ -64,8 +64,18 @@ const CalendarView = () => {
         .order('start_datetime', { ascending: true });
 
       if (error) throw error;
-      setEvents(data || []);
-      processEventLocations(data || []);
+      
+      // If not including past events, filter them out
+      let filteredData = data || [];
+      if (!filters.includePastEvents) {
+        const now = new Date();
+        filteredData = filteredData.filter(event => 
+          new Date(event.start_datetime) >= now
+        );
+      }
+      
+      setEvents(filteredData);
+      processEventLocations(filteredData);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -143,13 +153,14 @@ const CalendarView = () => {
         </p>
       </div>
       
-      {/* Add filters to Calendar View */}
+      {/* Add filters to Calendar View with past events option */}
       <div className="mb-6">
         <EventFiltersBar 
           filters={filters}
           setFilters={setFilters}
           onReset={resetFilters}
-          showDateFilter={false} // We don't need date filter in calendar view as the calendar itself handles date navigation
+          showDateFilter={false} // We don't need date filter in calendar view
+          showPastEventsFilter={true}
           inline={true}
         />
       </div>

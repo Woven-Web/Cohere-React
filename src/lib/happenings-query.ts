@@ -14,6 +14,7 @@ export async function fetchHappenings(options: {
   query?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  includePastEvents?: boolean; // New option to control past events
 }): Promise<Happening[]> {
   try {
     let query = supabase
@@ -27,6 +28,10 @@ export async function fetchHappenings(options: {
     
     if (options.startDate) {
       query = query.gte('start_datetime', options.startDate.toISOString());
+    } else if (!options.includePastEvents) {
+      // By default, only include events that haven't ended yet
+      // Use current time as the filter
+      query = query.gte('start_datetime', new Date().toISOString());
     }
     
     if (options.endDate) {
