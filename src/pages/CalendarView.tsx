@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { supabase, Happening } from '@/lib/supabase';
@@ -69,9 +68,11 @@ const CalendarView = () => {
       let filteredData = data || [];
       if (!filters.includePastEvents) {
         const now = new Date();
-        filteredData = filteredData.filter(event => 
-          new Date(event.start_datetime) >= now
-        );
+        filteredData = filteredData.filter(event => {
+          // An event is considered past only if its end time (or start time if no end time) is in the past
+          const eventEndTime = event.end_datetime ? new Date(event.end_datetime) : new Date(event.start_datetime);
+          return eventEndTime >= now;
+        });
       }
       
       setEvents(filteredData);

@@ -30,8 +30,13 @@ export async function fetchHappenings(options: {
       query = query.gte('start_datetime', options.startDate.toISOString());
     } else if (!options.includePastEvents) {
       // By default, only include events that haven't ended yet
-      // Use current time as the filter
-      query = query.gte('start_datetime', new Date().toISOString());
+      // First, get the current time
+      const now = new Date().toISOString();
+      
+      // Filter events where:
+      // 1. end_datetime is null and start_datetime is in the future, OR
+      // 2. end_datetime exists and is in the future
+      query = query.or(`end_datetime.is.null,end_datetime.gt.${now},and(end_datetime.is.null,start_datetime.gt.${now})`);
     }
     
     if (options.endDate) {

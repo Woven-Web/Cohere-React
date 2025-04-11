@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { addDays, startOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -84,13 +85,14 @@ export const useEventFilters = () => {
     
     return events.filter(event => {
       const eventDate = new Date(event.start_datetime);
+      const now = new Date();
       
       // Date filtering: First check if we should include past events
       if (!includePastEvents && !dateRange) {
         // When not explicitly including past events and no date range set
-        // Filter out events that have already occurred
-        const now = new Date();
-        if (eventDate < now) {
+        // An event is considered past only if its end time (or start time if no end time) is in the past
+        const eventEndTime = event.end_datetime ? new Date(event.end_datetime) : eventDate;
+        if (eventEndTime < now) {
           return false;
         }
       }

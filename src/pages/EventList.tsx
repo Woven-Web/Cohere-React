@@ -33,9 +33,11 @@ const EventList = () => {
       let processedEvents = data || [];
       if (!filters.includePastEvents) {
         const now = new Date();
-        processedEvents = processedEvents.filter(event => 
-          new Date(event.start_datetime) >= now
-        );
+        processedEvents = processedEvents.filter(event => {
+          // Check if the event has ended (using end_datetime if available, otherwise use start_datetime)
+          const eventEndTime = event.end_datetime ? new Date(event.end_datetime) : new Date(event.start_datetime);
+          return eventEndTime >= now;
+        });
       }
       
       setEvents(processedEvents);
