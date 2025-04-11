@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Clock, MapPin, Link2, ArrowLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { AttendButton } from '@/components/events/AttendButton';
 import FlagEventButton from '@/components/events/FlagEventButton';
@@ -135,7 +135,8 @@ const EventDetail = () => {
 
   const startDate = new Date(event.start_datetime);
   const endDate = event.end_datetime ? new Date(event.end_datetime) : null;
-  const isPast = startDate < new Date();
+  const isPast = endDate ? endDate < new Date() : startDate < new Date();
+  const isMultiDay = endDate && !isSameDay(startDate, endDate);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -241,9 +242,13 @@ const EventDetail = () => {
                     <Calendar className="h-5 w-5 text-primary mr-3 mt-0.5" />
                     <div>
                       <h3 className="font-medium">Date</h3>
-                      <p>{format(startDate, 'MMMM d, yyyy')}</p>
-                      {endDate && endDate.toDateString() !== startDate.toDateString() && (
-                        <p>to {format(endDate, 'MMMM d, yyyy')}</p>
+                      {isMultiDay ? (
+                        <>
+                          <p>From {format(startDate, 'MMMM d, yyyy')}</p>
+                          <p>to {format(endDate, 'MMMM d, yyyy')}</p>
+                        </>
+                      ) : (
+                        <p>{format(startDate, 'MMMM d, yyyy')}</p>
                       )}
                     </div>
                   </div>

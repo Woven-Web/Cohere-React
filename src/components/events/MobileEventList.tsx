@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Happening } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -39,8 +38,15 @@ const MobileEventList: React.FC<MobileEventListProps> = ({
     page * eventsPerPage
   );
 
-  const formatEventDate = (date: string) => {
-    return format(new Date(date), 'MMMM d, yyyy h:mm a');
+  const formatEventDate = (event: Happening) => {
+    const startDate = new Date(event.start_datetime);
+    const endDate = event.end_datetime ? new Date(event.end_datetime) : null;
+    
+    if (endDate && !isSameDay(startDate, endDate)) {
+      return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    
+    return format(startDate, 'MMMM d, yyyy h:mm a');
   };
 
   return (
@@ -69,7 +75,7 @@ const MobileEventList: React.FC<MobileEventListProps> = ({
               <h3 className="font-semibold text-sm mb-1 line-clamp-1">{event.title}</h3>
               <div className="flex items-center text-xs text-muted-foreground mb-1">
                 <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{formatEventDate(event.start_datetime)}</span>
+                <span className="truncate">{formatEventDate(event)}</span>
               </div>
               {event.location && (
                 <div className="flex items-center text-xs text-muted-foreground">

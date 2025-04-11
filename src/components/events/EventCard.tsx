@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { Happening } from '@/lib/supabase-client';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, showAttendButton = true })
   const isToday = new Date().toDateString() === startDate.toDateString();
   
   // Check if event has already passed
-  const isPast = startDate < new Date();
+  const isPast = endDate 
+    ? endDate < new Date()
+    : startDate < new Date();
+  
+  // Check if this is a multi-day event (start and end dates are different days)
+  const isMultiDay = endDate && !isSameDay(startDate, endDate);
 
   return (
     <div className={`event-card ${isPast ? 'opacity-70' : ''}`}>
@@ -52,7 +57,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, showAttendButton = true })
         <div className="mt-4 space-y-2">
           <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 mr-2" />
-            <span>{format(startDate, 'MMMM d, yyyy')}</span>
+            {isMultiDay ? (
+              <span>
+                {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+              </span>
+            ) : (
+              <span>{format(startDate, 'MMMM d, yyyy')}</span>
+            )}
           </div>
           
           <div className="flex items-center text-sm text-muted-foreground">
