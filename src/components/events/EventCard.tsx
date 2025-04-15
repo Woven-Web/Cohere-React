@@ -49,7 +49,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, showAttendButton = true })
         </div>
         
         <div className="mt-2">
-          <p className="text-sm text-muted-foreground line-clamp-2">
+          <p className="text-sm text-muted-foreground line-clamp-2 prose-sm prose">
             {event.description || 'No description available.'}
           </p>
         </div>

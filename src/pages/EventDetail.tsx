@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase, Happening } from '@/lib/supabase';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { AttendButton } from '@/components/events/AttendButton';
 import FlagEventButton from '@/components/events/FlagEventButton';
 import { useAuth } from '@/contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -215,9 +217,13 @@ const EventDetail = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-3">
               <div className="prose max-w-none">
-                <p className="whitespace-pre-line">
-                  {event.description || 'No description provided.'}
-                </p>
+                {event.description ? (
+                  <ReactMarkdown className="whitespace-pre-line">
+                    {event.description}
+                  </ReactMarkdown>
+                ) : (
+                  <p>No description provided.</p>
+                )}
               </div>
 
               {event.source_url && (
