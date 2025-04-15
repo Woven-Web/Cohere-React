@@ -26,6 +26,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
 
   const isActive = (path: string) => {
+    // For HashRouter, we need to check against the pathname without the hash
     return location.pathname === path ? 'nav-link-active' : '';
   };
 
