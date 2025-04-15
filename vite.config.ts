@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // Add historyApiFallback to handle client-side routing
     historyApiFallback: true,
   },
   plugins: [
@@ -22,7 +21,6 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Force the build to create a single index.html that handles all routes
   build: {
     rollupOptions: {
       output: {

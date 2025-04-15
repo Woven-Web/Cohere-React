@@ -31,8 +31,8 @@ const NotFound = () => {
               Go to Home
             </Link>
           </Button>
-          <Button asChild variant="outline" onClick={() => window.history.back()}>
-            <Link to="#" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
+          <Button asChild variant="outline">
+            <Link to="/" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Link>
