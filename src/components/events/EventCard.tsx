@@ -6,6 +6,7 @@ import { Happening } from '@/lib/supabase-client';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AttendButton } from './AttendButton';
+import { markdownToPlainText } from '@/lib/utils';
 
 interface EventCardProps {
   event: Happening;
@@ -26,6 +27,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, showAttendButton = true })
   
   // Check if this is a multi-day event (start and end dates are different days)
   const isMultiDay = endDate && !isSameDay(startDate, endDate);
+
+  // Convert markdown description to plain text for the card
+  const plainTextDescription = event.description ? markdownToPlainText(event.description) : 'No description available.';
 
   return (
     <div className={`event-card ${isPast ? 'opacity-70' : ''}`}>
@@ -50,7 +54,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, showAttendButton = true })
         
         <div className="mt-2">
           <p className="text-sm text-muted-foreground line-clamp-2 prose-sm prose">
-            {event.description || 'No description available.'}
+            {plainTextDescription}
           </p>
         </div>
         

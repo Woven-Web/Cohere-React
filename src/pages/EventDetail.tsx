@@ -218,9 +218,11 @@ const EventDetail = () => {
             <div className="md:col-span-3">
               <div className="prose max-w-none">
                 {event.description ? (
-                  <ReactMarkdown className="whitespace-pre-line">
-                    {event.description}
-                  </ReactMarkdown>
+                  <div className="whitespace-pre-line">
+                    <ReactMarkdown>
+                      {event.description}
+                    </ReactMarkdown>
+                  </div>
                 ) : (
                   <p>No description provided.</p>
                 )}
