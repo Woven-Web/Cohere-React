@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Clock, MapPin, Link2, Loader2, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, Link2, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -162,6 +163,7 @@ const EventForm: React.FC<EventFormProps> = ({
         endDateTime.setHours(endHours, endMinutes);
       }
 
+      // Set status based on role: submitters, curators, and admins can publish immediately
       const status = isCurator || isAdmin ? 'approved' : 'pending';
       
       const eventData: any = {

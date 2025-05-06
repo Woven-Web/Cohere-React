@@ -35,7 +35,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { path: '/', label: 'List', icon: <List className="h-4 w-4" /> },
     { path: '/calendar', label: 'Calendar', icon: <Calendar className="h-4 w-4" /> },
     { path: '/map', label: 'Map', icon: <MapPin className="h-4 w-4" /> },
-    ...(isSubmitter ? [{ path: '/submit', label: 'Submit', icon: <PlusCircle className="h-4 w-4" /> }] : []),
+    // Show submit for any authenticated user
+    ...(user ? [{ path: '/submit', label: 'Submit', icon: <PlusCircle className="h-4 w-4" /> }] : []),
     ...(isCurator ? [{ path: '/admin', label: 'Curate', icon: <ShieldCheck className="h-4 w-4" /> }] : []),
   ];
 

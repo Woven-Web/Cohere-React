@@ -10,6 +10,7 @@ interface AuthContextType {
   isSubmitter: boolean;
   isCurator: boolean;
   isAdmin: boolean;
+  isAuthenticated: boolean; // New property to track if user is authenticated
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -26,12 +27,16 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
   const [isSubmitter, setIsSubmitter] = useState(false);
   const [isCurator, setIsCurator] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // New state to track if user is authenticated
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        const isAuth = !!session?.user;
+        setIsAuthenticated(isAuth); // Set authentication status
         setUser(session?.user || null);
+        
         if (session?.user) {
           fetchUserProfile(session.user.id);
         } else {
@@ -46,7 +51,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
 
     // Initial load
     supabase.auth.getSession().then(({ data: { session } }) => {
+      const isAuth = !!session?.user;
+      setIsAuthenticated(isAuth); // Set initial authentication status
       setUser(session?.user || null);
+      
       if (session?.user) {
         fetchUserProfile(session.user.id);
       }
@@ -139,6 +147,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }
     isSubmitter,
     isCurator,
     isAdmin,
+    isAuthenticated, // Add the new property to the context value
     loading,
     login,
     logout,
